@@ -3672,3 +3672,273 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadSavedLogo();
         });
+
+// =================================================================================
+// == CÓDIGO PARA GESTIÓN DE EQUIIPO DE EMPRESA ==
+// =================================================================================
+
+// --- VARIABLES GLOBALES PARA EQUIPO ---
+let equipment = [];
+let currentEditingEquipmentId = null;
+let currentEditingTripId = null;
+
+// --- CARGA INICIAL DE DATOS DE EQUIPO ---
+// Esta función se llama cuando la página se carga por primera vez
+function initializeEquipment() {
+    loadEquipmentFromStorage();
+    renderEquipmentTable();
+}
+
+// --- FUNCIONES DE GESTIÓN DE EQUIPO ---
+
+function showSection(sectionId) {
+    // Oculta todas las secciones
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+    // Muestra la sección seleccionada
+    document.getElementById(sectionId).classList.add('active');
+
+    // Si la sección que se muestra es la de equipo, renderiza la tabla
+    if (sectionId === 'equipment') {
+        renderEquipmentTable();
+    }
+}
+
+function showNewEquipmentModal() {
+    console.log("Abriendo modal de nuevo equipo..."); // Mensaje para depuración
+    document.getElementById('equipmentModalTitle').innerText = 'Nuevo Equipo';
+    document.getElementById('equipmentForm').reset();
+    document.getElementById('equipmentId').value = '';
+    document.getElementById('equipmentModal').style.display = 'block';
+}
+
+function closeEquipmentModal() {
+    document.getElementById('equipmentModal').style.display = 'none';
+}
+
+function saveEquipment(event) {
+    event.preventDefault(); // Evita que el formulario se envíe de la forma tradicional
+    const id = document.getElementById('equipmentId').value;
+    const equipmentData = {
+        id: id || Date.now().toString(), // Usa timestamp como ID si es nuevo
+        name: document.getElementById('equipmentName').value,
+        quantity: parseInt(document.getElementById('equipmentQuantity').value),
+        status: document.getElementById('equipmentStatus').value,
+        brand: document.getElementById('equipmentBrand').value,
+        capacity: document.getElementById('equipmentCapacity').value,
+        location: document.getElementById('equipmentLocation').value,
+        cost: parseFloat(document.getElementById('equipmentCost').value) || 0,
+        observations: document.getElementById('equipmentObservations').value
+    };
+
+    if (id) {
+        // Editar un equipo existente
+        const index = equipment.findIndex(e => e.id === id);
+        if (index > -1) {
+            equipment[index] = equipmentData;
+        }
+    } else {
+        // Agregar un nuevo equipo
+        equipment.push(equipmentData);
+    }
+
+    saveEquipmentToStorage();
+    renderEquipmentTable();
+    closeEquipmentModal();
+    showNotification('Equipo guardado correctamente', 'success');
+}
+
+function editEquipment(id) {
+    const item = equipment.find(e => e.id === id);
+    if (item) {
+        document.getElementById('equipmentModalTitle').innerText = 'Editar Equipo';
+        document.getElementById('equipmentId').value = item.id;
+        document.getElementById('equipmentName').value = item.name;
+        document.getElementById('equipmentQuantity').value = item.quantity;
+        document.getElementById('equipmentStatus').value = item.status;
+        document.getElementById('equipmentBrand').value = item.brand;
+        document.getElementById('equipmentCapacity').value = item.capacity;
+        document.getElementById('equipmentLocation').value = item.location;
+        document.getElementById('equipmentCost').value = item.cost;
+        document.getElementById('equipmentObservations').value = item.observations;
+        document.getElementById('equipmentModal').style.display = 'block';
+    }
+}
+
+function deleteEquipment(id) {
+    if (confirm('¿Estás seguro de que quieres eliminar este equipo? Esta acción no se puede deshacer.')) {
+        equipment = equipment.filter(e => e.id !== id);
+        saveEquipmentToStorage();
+        renderEquipmentTable();
+        showNotification('Equipo eliminado', 'info');
+    }
+}
+
+function renderEquipmentTable() {
+    const tbody = document.getElementById('equipmentTableBody');
+    tbody.innerHTML = ''; // Limpia la tabla antes de volver a renderizar
+
+    if (equipment.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color: #6c757d;">No hay equipo registrado. Haz clic en "Agregar Nuevo Equipo" para comenzar.</td></tr>';
+        return;
+    }
+
+    equipment.forEach(item => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.quantity}</td>
+            <td><span class="status-badge status-${item.status.toLowerCase().replace(/\s+/g, '-')}">${item.status}</span></td>
+            <td>${item.brand || '-'}</td>
+            <td>${item.capacity || '-'}</td>
+            <td>${item.location || '-'}</td>
+            <td>$${item.cost.toFixed(2)}</td>
+            <td>${item.observations || '-'}</td>
+            <td>
+                <button class="btn btn-small btn-primary" onclick="editEquipment('${item.id}')" title="Editar"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-small btn-danger" onclick="deleteEquipment('${item.id}')" title="Eliminar"><i class="fas fa-trash"></i></button>
+            </td>
+        `;
+    });
+}
+
+function filterEquipment() {
+    const search = document.getElementById('equipmentSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#equipmentTableBody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
+    });
+}
+
+
+// --- MANEJO DE EQUIPO DENTRO DEL MODAL DE VIAJES ---
+
+function loadTripEquipment(tripId) {
+    const container = document.getElementById('tripEquipmentContainer');
+    container.innerHTML = ''; // Limpiar contenedor
+
+    if (equipment.length === 0) {
+        container.innerHTML = '<p style="color: #6c757d; text-align: center;">No hay equipo registrado en el sistema. <a href="#" onclick="showSection(\'equipment\')">Regístralo aquí</a>.</p>';
+        return;
+    }
+
+    // Obtener el viaje actual para cargar las cantidades asignadas
+    const trips = JSON.parse(localStorage.getItem('trips') || '[]');
+    const currentTrip = trips.find(t => t.id === tripId);
+    const assignedEquipment = currentTrip ? currentTrip.assignedEquipment || {} : {};
+
+    equipment.forEach(item => {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        div.style.padding = '8px';
+        div.style.borderBottom = '1px solid #eee';
+
+        const label = document.createElement('label');
+        label.style.margin = '0';
+        label.style.flexGrow = '1';
+        label.innerHTML = `${item.name} <small>(Disponible: ${item.quantity})</small>`;
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.max = item.quantity;
+        input.value = assignedEquipment[item.id] || 0;
+        input.className = 'form-control'; // Usa clase existente para estilo
+        input.style.width = '80px';
+        input.style.marginLeft = '10px';
+        input.dataset.equipmentId = item.id;
+
+        div.appendChild(label);
+        div.appendChild(input);
+        container.appendChild(div);
+    });
+}
+
+// --- ALMACENAMIENTO LOCAL (LOCAL STORAGE) ---
+
+function saveEquipmentToStorage() {
+    localStorage.setItem('equipment', JSON.stringify(equipment));
+}
+
+function loadEquipmentFromStorage() {
+    const stored = localStorage.getItem('equipment');
+    if (stored) {
+        equipment = JSON.parse(stored);
+    }
+}
+
+
+// --- EVENT LISTENERS PARA EQUIPO ---
+
+// Asegurarse de que el DOM esté listo antes de asignar eventos
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar el equipo al cargar la página
+    initializeEquipment();
+
+    // Asignar el evento submit al formulario de equipo
+    const equipmentForm = document.getElementById('equipmentForm');
+    if (equipmentForm) {
+        equipmentForm.addEventListener('submit', saveEquipment);
+    }
+
+    // Cerrar modales al hacer clic fuera de la ventana
+    window.onclick = function(event) {
+        const equipmentModal = document.getElementById('equipmentModal');
+        if (event.target === equipmentModal) {
+            closeEquipmentModal();
+        }
+        // ... otros modales si los tienes
+    }
+});
+
+// Sobrescribimos la función de mostrar/editar viajes para que también cargue el equipo
+const originalShowNewTripModal = window.showNewTripModal;
+window.showNewTripModal = function(tripId) {
+    currentEditingTripId = tripId;
+    loadTripEquipment(tripId); // Carga el equipment al abrir el modal de viaje
+    if (originalShowNewTripModal) {
+        originalShowNewTripModal(tripId);
+    }
+};
+
+const originalEditTrip = window.editTrip;
+window.editTrip = function(tripId) {
+    currentEditingTripId = tripId;
+    loadTripEquipment(tripId); // Carga el equipment al editar un viaje
+    if (originalEditTrip) {
+        originalEditTrip(tripId);
+    }
+};
+
+// Sobrescribimos la función de guardar viajes para que también guarde el equipo asignado
+const originalSaveTrip = window.saveTrip; // Asumimos que tienes una función saveTrip
+window.saveTrip = function(tripId) {
+    // Recopilar datos del equipo del modal de viaje
+    const assignedEquipment = {};
+    const equipmentInputs = document.querySelectorAll('#tripEquipmentContainer input[data-equipment-id]');
+    equipmentInputs.forEach(input => {
+        const equipmentId = input.dataset.equipmentId;
+        const quantity = parseInt(input.value) || 0;
+        if (quantity > 0) {
+            assignedEquipment[equipmentId] = quantity;
+        }
+    });
+
+    // Guardar los datos del equipo asignado en el objeto del viaje
+    // Esto requiere que tu función saveTrip maneje este nuevo campo
+    const trips = JSON.parse(localStorage.getItem('trips') || '[]');
+    const tripIndex = trips.findIndex(t => t.id === tripId);
+    if (tripIndex > -1) {
+        trips[tripIndex].assignedEquipment = assignedEquipment;
+        localStorage.setItem('trips', JSON.stringify(trips));
+    }
+
+    // Llamar a la función original de guardar viaje si existe
+    if (originalSaveTrip) {
+        originalSaveTrip(tripId);
+    }
+};

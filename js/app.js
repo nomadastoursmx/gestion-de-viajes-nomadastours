@@ -3942,17 +3942,21 @@ window.saveTrip = function(tripId) {
         originalSaveTrip(tripId);
     }
 };
+
 // =================================================================================
-// == CÓDIGO PARA FUNCIONALIDAD DE COMPARTIR VIAJES ==
+// == CÓDIGO SEGuro PARA FUNCIONALIDAD DE COMPARTIR VIAJES ==
 // =================================================================================
 
 let currentShareTripId = null;
 
 function openShareTripModal(tripId) {
     currentShareTripId = tripId;
-    const trip = trips.find(t => t.id === tripId);
+    // Leemos los viajes directamente desde el almacenamiento local para evitar conflictos
+    const allTrips = JSON.parse(localStorage.getItem('trips') || '[]');
+    const trip = allTrips.find(t => t.id === tripId);
     if (!trip) {
-        showNotification('Error: No se encontró el viaje.', 'error');
+        // Usamos una alerta simple en caso de que showNotification no exista
+        alert('Error: No se encontró el viaje para compartir.');
         return;
     }
 
@@ -3998,13 +4002,14 @@ function closeShareTripModal() {
 function updateSharePreview() {
     const previewBox = document.getElementById('shareTripPreviewBox');
     let content = '';
-    const trip = trips.find(t => t.id === currentShareTripId);
+    // Leemos los viajes directamente desde el almacenamiento local
+    const allTrips = JSON.parse(localStorage.getItem('trips') || '[]');
+    const trip = allTrips.find(t => t.id === currentShareTripId);
     if (!trip) {
         previewBox.innerText = 'No se pudo cargar la información del viaje.';
         return;
     }
 
-    // Función auxiliar para formatear fechas
     const formatDate = (dateString) => new Date(dateString).toLocaleDateString('es-MX');
 
     if (document.getElementById('sh_name').checked) content += `**Viaje:** ${trip.name}\n`;
@@ -4034,7 +4039,6 @@ function updateSharePreview() {
         }
     }
     if (document.getElementById('sh_payments').checked) {
-        // Aquí se podría añadir un desglose de pagos si se tiene
         content += `**Estado de Pagos:** Ver detalles en el sistema.\n`;
     }
     if (document.getElementById('sh_food_needs').checked) {
@@ -4049,7 +4053,6 @@ function updateSharePreview() {
         if (teamList) content += `**Equipo/Staff Asignado:**\n${teamList}\n`;
     }
     if (document.getElementById('sh_expenses').checked) {
-        // Aquí se podría añadir un desglose de gastos si se tiene
         content += `**Gastos del Viaje:** Ver detalles en el sistema.\n`;
     }
     if (document.getElementById('sh_expenses_covered').checked) {
@@ -4063,28 +4066,27 @@ function updateSharePreview() {
 }
 
 function getShareText() {
-    // Simplemente devuelve el texto de la vista previa
     return document.getElementById('shareTripPreviewBox').textContent;
 }
 
 function copyShareText() {
     const text = getShareText();
     if (!text) {
-        showNotification('No hay nada que copiar.', 'warning');
+        alert('No hay nada que copiar.');
         return;
     }
     navigator.clipboard.writeText(text).then(() => {
-        showNotification('¡Texto copiado al portapapeles!', 'success');
+        alert('¡Texto copiado al portapapeles!');
     }).catch(err => {
         console.error('Error al copiar el texto: ', err);
-        showNotification('No se pudo copiar el texto.', 'error');
+        alert('No se pudo copiar el texto.');
     });
 }
 
 function shareViaWhatsApp() {
     const text = getShareText();
     if (!text) {
-        showNotification('No hay nada que compartir.', 'warning');
+        alert('No hay nada que compartir.');
         return;
     }
     const phoneNumber = prompt('¿A qué número de WhatsApp quieres enviarlo? (Incluye lada, sin +)');
@@ -4097,23 +4099,24 @@ function shareViaWhatsApp() {
 function shareToPDF() {
     const { jsPDF } = window.jspdf;
     if (!jsPDF) {
-        showNotification('Error: La librería para generar PDF no se cargó correctamente.', 'error');
+        alert('Error: La librería para generar PDF no se cargó correctamente. Asegúrate de haber añadido el script en el index.html');
         return;
     }
 
-    const trip = trips.find(t => t.id === currentShareTripId);
+    const allTrips = JSON.parse(localStorage.getItem('trips') || '[]');
+    const trip = allTrips.find(t => t.id === currentShareTripId);
     if (!trip) return;
 
     const doc = new jsPDF();
     const text = getShareText();
-    const lines = doc.splitTextToSize(text, 180); // Divide el texto en líneas que quepan en el PDF
+    const lines = doc.splitTextToSize(text, 180);
     
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     
     let y = 20;
     lines.forEach(line => {
-        if (y > 270) { // Si llega al final de la página
+        if (y > 270) {
             doc.addPage();
             y = 20;
         }
@@ -4121,15 +4124,4 @@ function shareToPDF() {
         y += 7;
     });
 
-    doc.save(`informacion-viaje-${trip.name.replace(/\s+/g, '_')}.pdf`);
-    showNotification('PDF descargado correctamente.', 'success');
-}
-
-// Asignar eventos a los checkboxes y textareas del modal de compartir
-document.addEventListener('DOMContentLoaded', () => {
-    const shareModalElements = document.querySelectorAll('#shareTripModal input[type="checkbox"], #shareTripModal textarea');
-    shareModalElements.forEach(element => {
-        element.addEventListener('change', updateSharePreview);
-        element.addEventListener('input', updateSharePreview);
-    });
-});
+    doc.save(`informacion-viaje-${trip.name.rep

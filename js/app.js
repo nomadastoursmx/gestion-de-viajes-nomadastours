@@ -3942,3 +3942,194 @@ window.saveTrip = function(tripId) {
         originalSaveTrip(tripId);
     }
 };
+// =================================================================================
+// == CÓDIGO PARA FUNCIONALIDAD DE COMPARTIR VIAJES ==
+// =================================================================================
+
+let currentShareTripId = null;
+
+function openShareTripModal(tripId) {
+    currentShareTripId = tripId;
+    const trip = trips.find(t => t.id === tripId);
+    if (!trip) {
+        showNotification('Error: No se encontró el viaje.', 'error');
+        return;
+    }
+
+    // Resetear checkboxes a valores por defecto
+    document.getElementById('sh_name').checked = true;
+    document.getElementById('sh_destination').checked = true;
+    document.getElementById('sh_dates').checked = true;
+    document.getElementById('sh_description').checked = true;
+    document.getElementById('sh_promo').checked = false;
+    document.getElementById('sh_price').checked = true;
+    document.getElementById('sh_logistics').checked = true;
+    document.getElementById('sh_transport').checked = false;
+    document.getElementById('sh_accommodation').checked = false;
+    document.getElementById('sh_meals').checked = false;
+    document.getElementById('sh_includes').checked = true;
+    document.getElementById('sh_excludes').checked = false;
+    document.getElementById('sh_providers').checked = true;
+    document.getElementById('sh_provider_contacts').checked = false;
+    document.getElementById('sh_clients').checked = true;
+    document.getElementById('sh_payments').checked = false;
+    document.getElementById('sh_food_needs').checked = false;
+    document.getElementById('sh_team').checked = false;
+    document.getElementById('sh_expenses').checked = false;
+    document.getElementById('sh_expenses_covered').checked = false;
+    document.getElementById('sh_notes').checked = false;
+    document.getElementById('sh_capacity').checked = false;
+
+    // Limpiar campos de texto personalizados
+    document.getElementById('shareTeamList').value = '';
+    document.getElementById('shareExpensesCovered').value = '';
+    document.getElementById('shareProviderContacts').value = '';
+
+    // Actualizar vista previa inicial
+    updateSharePreview();
+
+    document.getElementById('shareTripModal').style.display = 'block';
+}
+
+function closeShareTripModal() {
+    document.getElementById('shareTripModal').style.display = 'none';
+}
+
+function updateSharePreview() {
+    const previewBox = document.getElementById('shareTripPreviewBox');
+    let content = '';
+    const trip = trips.find(t => t.id === currentShareTripId);
+    if (!trip) {
+        previewBox.innerText = 'No se pudo cargar la información del viaje.';
+        return;
+    }
+
+    // Función auxiliar para formatear fechas
+    const formatDate = (dateString) => new Date(dateString).toLocaleDateString('es-MX');
+
+    if (document.getElementById('sh_name').checked) content += `**Viaje:** ${trip.name}\n`;
+    if (document.getElementById('sh_destination').checked) content += `**Destino:** ${trip.destination}\n`;
+    if (document.getElementById('sh_dates').checked) content += `**Fechas:** ${formatDate(trip.startDate)} al ${formatDate(trip.endDate)}\n`;
+    if (document.getElementById('sh_description').checked && trip.description) content += `**Descripción:** ${trip.description}\n`;
+    if (document.getElementById('sh_promo').checked && trip.promoText) content += `**Promoción:** ${trip.promoText}\n`;
+    if (document.getElementById('sh_price').checked) content += `**Precio por Persona:** $${trip.price.toFixed(2)}\n`;
+    if (document.getElementById('sh_logistics').checked && trip.logistics) content += `**Itinerario/Logística:**\n${trip.logistics}\n`;
+    if (document.getElementById('sh_transport').checked && trip.transport) content += `**Transporte:** ${trip.transport}\n`;
+    if (document.getElementById('sh_accommodation').checked && trip.accommodation) content += `**Hospedaje:** ${trip.accommodation}\n`;
+    if (document.getElementById('sh_meals').checked && trip.meals) content += `**Alimentación:** ${trip.meals}\n`;
+    if (document.getElementById('sh_includes').checked && trip.includes && trip.includes.length > 0) content += `**Incluye:**\n- ${trip.includes.join('\n- ')}\n`;
+    if (document.getElementById('sh_excludes').checked && trip.excludes && trip.excludes.length > 0) content += `**No Incluye:**\n- ${trip.excludes.join('\n- ')}\n`;
+    if (document.getElementById('sh_providers').checked && trip.providers && trip.providers.length > 0) content += `**Proveedores:**\n- ${trip.providers.join('\n- ')}\n`;
+    if (document.getElementById('sh_provider_contacts').checked) {
+        const contacts = document.getElementById('shareProviderContacts').value;
+        if (contacts) content += `**Contactos Proveedores:**\n${contacts}\n`;
+    }
+    if (document.getElementById('sh_clients').checked) {
+        content += `**Pasajeros (${trip.clients ? trip.clients.length : 0}):**\n`;
+        if (trip.clients && trip.clients.length > 0) {
+            trip.clients.forEach(c => {
+                let paymentStatus = c.paymentStatus || 'Pendiente';
+                content += `- ${c.name} (Pago: ${paymentStatus})\n`;
+            });
+        }
+    }
+    if (document.getElementById('sh_payments').checked) {
+        // Aquí se podría añadir un desglose de pagos si se tiene
+        content += `**Estado de Pagos:** Ver detalles en el sistema.\n`;
+    }
+    if (document.getElementById('sh_food_needs').checked) {
+        const specialFoodClients = trip.clients ? trip.clients.filter(c => c.food) : [];
+        if (specialFoodClients.length > 0) {
+            content += `**Req. Alimentarios Especiales:**\n`;
+            specialFoodClients.forEach(c => content += `- ${c.name}\n`);
+        }
+    }
+    if (document.getElementById('sh_team').checked) {
+        const teamList = document.getElementById('shareTeamList').value;
+        if (teamList) content += `**Equipo/Staff Asignado:**\n${teamList}\n`;
+    }
+    if (document.getElementById('sh_expenses').checked) {
+        // Aquí se podría añadir un desglose de gastos si se tiene
+        content += `**Gastos del Viaje:** Ver detalles en el sistema.\n`;
+    }
+    if (document.getElementById('sh_expenses_covered').checked) {
+        const expenses = document.getElementById('shareExpensesCovered').value;
+        if (expenses) content += `**Gastos Cubiertos por el Viaje:**\n${expenses}\n`;
+    }
+    if (document.getElementById('sh_notes').checked && trip.notes) content += `**Notas Internas:** ${trip.notes}\n`;
+    if (document.getElementById('sh_capacity').checked && trip.capacity) content += `**Capacidad Máx.:** ${trip.capacity} personas\n`;
+
+    previewBox.textContent = content || 'Selecciona los elementos que deseas incluir para ver la vista previa.';
+}
+
+function getShareText() {
+    // Simplemente devuelve el texto de la vista previa
+    return document.getElementById('shareTripPreviewBox').textContent;
+}
+
+function copyShareText() {
+    const text = getShareText();
+    if (!text) {
+        showNotification('No hay nada que copiar.', 'warning');
+        return;
+    }
+    navigator.clipboard.writeText(text).then(() => {
+        showNotification('¡Texto copiado al portapapeles!', 'success');
+    }).catch(err => {
+        console.error('Error al copiar el texto: ', err);
+        showNotification('No se pudo copiar el texto.', 'error');
+    });
+}
+
+function shareViaWhatsApp() {
+    const text = getShareText();
+    if (!text) {
+        showNotification('No hay nada que compartir.', 'warning');
+        return;
+    }
+    const phoneNumber = prompt('¿A qué número de WhatsApp quieres enviarlo? (Incluye lada, sin +)');
+    if (phoneNumber && phoneNumber.trim() !== '') {
+        const url = `https://wa.me/${phoneNumber.trim()}?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
+}
+
+function shareToPDF() {
+    const { jsPDF } = window.jspdf;
+    if (!jsPDF) {
+        showNotification('Error: La librería para generar PDF no se cargó correctamente.', 'error');
+        return;
+    }
+
+    const trip = trips.find(t => t.id === currentShareTripId);
+    if (!trip) return;
+
+    const doc = new jsPDF();
+    const text = getShareText();
+    const lines = doc.splitTextToSize(text, 180); // Divide el texto en líneas que quepan en el PDF
+    
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    
+    let y = 20;
+    lines.forEach(line => {
+        if (y > 270) { // Si llega al final de la página
+            doc.addPage();
+            y = 20;
+        }
+        doc.text(line, 15, y);
+        y += 7;
+    });
+
+    doc.save(`informacion-viaje-${trip.name.replace(/\s+/g, '_')}.pdf`);
+    showNotification('PDF descargado correctamente.', 'success');
+}
+
+// Asignar eventos a los checkboxes y textareas del modal de compartir
+document.addEventListener('DOMContentLoaded', () => {
+    const shareModalElements = document.querySelectorAll('#shareTripModal input[type="checkbox"], #shareTripModal textarea');
+    shareModalElements.forEach(element => {
+        element.addEventListener('change', updateSharePreview);
+        element.addEventListener('input', updateSharePreview);
+    });
+});

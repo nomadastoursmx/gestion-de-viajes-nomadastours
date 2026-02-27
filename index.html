@@ -51,10 +51,6 @@
                 <button class="btn btn-tools" onclick="showSection('tools')">
                     <i class="fas fa-toolbox"></i> Herramientas
                 </button>
-                <!-- NUEVO BOTÓN DE NAVEGACIÓN -->
-                <button class="btn btn-secondary" onclick="showSection('equipment')">
-                    <i class="fas fa-boxes"></i> Gestión de Equipo
-                </button>
             </div>
         </div>
 
@@ -193,44 +189,6 @@
                             </tr>
                         </thead>
                         <tbody id="clientsTableBody">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- NUEVA SECCIÓN: Gestión de Equipo -->
-            <div id="equipment" class="section">
-                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;flex-wrap:wrap;">
-                    <button class="btn btn-secondary" onclick="showSection('dashboard')" style="padding:8px 18px;">
-                        <i class="fas fa-arrow-left"></i> Regresar
-                    </button>
-                    <h2 style="margin:0;"><i class="fas fa-boxes"></i> Gestión de Equipo de la Empresa</h2>
-                </div>
-                
-                <div style="margin-bottom: 25px;">
-                    <button class="btn btn-primary" onclick="showNewEquipmentModal()">
-                        <i class="fas fa-plus-circle"></i> Agregar Nuevo Equipo
-                    </button>
-                </div>
-
-                <input type="text" id="equipmentSearchInput" class="search-box" placeholder="🔍 Buscar equipo por nombre, marca o ubicación..." onkeyup="filterEquipment()">
-
-                <div style="overflow-x: auto;">
-                    <table class="clients-table" id="equipmentTable">
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Cantidad</th>
-                                <th>Estado</th>
-                                <th>Marca</th>
-                                <th>Capacidad</th>
-                                <th>Ubicación</th>
-                                <th>Costo (Repo)</th>
-                                <th>Observaciones</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="equipmentTableBody">
                         </tbody>
                     </table>
                 </div>
@@ -853,6 +811,124 @@
         </div>
 
         <!-- Trip Modal -->
+        <!-- Manage Categories Modal -->
+        <div id="manageCategoriesModal" class="modal">
+            <div class="modal-content" style="max-width:450px;">
+                <div class="modal-header">
+                    <h2><i class="fas fa-tags"></i> Gestionar Categorías</h2>
+                    <span class="close" onclick="document.getElementById('manageCategoriesModal').style.display='none'">×</span>
+                </div>
+                <div>
+                    <div style="display:flex;gap:8px;margin-bottom:15px;">
+                        <input type="text" id="newCategoryInput" placeholder="Nueva categoría..." style="flex:1;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;"
+                            onkeypress="if(event.key==='Enter'){event.preventDefault();addNewCategory();}">
+                        <button type="button" class="btn btn-primary" onclick="addNewCategory()"><i class="fas fa-plus"></i> Agregar</button>
+                    </div>
+                    <div id="categoriesListContainer" style="max-height:350px;overflow-y:auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Trip Modal -->
+        <div id="shareTripModal" class="modal">
+            <div class="modal-content large" style="max-width:800px;">
+                <div class="modal-header">
+                    <h2><i class="fas fa-share-alt"></i> Compartir Información del Viaje</h2>
+                    <span class="close" onclick="closeShareTripModal()">×</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:25px;" id="shareTripLayout">
+                    <!-- Checkboxes column -->
+                    <div>
+                        <h4 style="margin-bottom:15px;color:var(--primary);"><i class="fas fa-filter"></i> ¿Qué deseas incluir?</h4>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">📋 Información del viaje</p>
+                            <label class="share-check"><input type="checkbox" id="sh_name" checked> Nombre y destino</label>
+                            <label class="share-check"><input type="checkbox" id="sh_duration" checked> Duración</label>
+                            <label class="share-check"><input type="checkbox" id="sh_description" checked> Descripción</label>
+                            <label class="share-check"><input type="checkbox" id="sh_promo"> Texto promocional</label>
+                            <label class="share-check"><input type="checkbox" id="sh_price" checked> Precio por persona</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">🗺️ Logística</p>
+                            <label class="share-check"><input type="checkbox" id="sh_logistics" checked> Itinerario/Logística</label>
+                            <label class="share-check"><input type="checkbox" id="sh_transport"> Transporte</label>
+                            <label class="share-check"><input type="checkbox" id="sh_accommodation"> Hospedaje</label>
+                            <label class="share-check"><input type="checkbox" id="sh_meals"> Alimentación</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">✅ Servicios</p>
+                            <label class="share-check"><input type="checkbox" id="sh_includes" checked> Qué incluye</label>
+                            <label class="share-check"><input type="checkbox" id="sh_excludes"> Qué NO incluye</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">🤝 Proveedores</p>
+                            <label class="share-check"><input type="checkbox" id="sh_providers" checked> Lista de proveedores</label>
+                            <label class="share-check"><input type="checkbox" id="sh_provider_contacts"> Contactos proveedores</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">👥 Pasajeros (viaje activo)</p>
+                            <label class="share-check"><input type="checkbox" id="sh_clients"> Lista de pasajeros</label>
+                            <label class="share-check"><input type="checkbox" id="sh_payments"> Estado de pagos</label>
+                            <label class="share-check"><input type="checkbox" id="sh_food_needs"> Req. alimentarios especiales</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">🧑‍💼 Equipo / Staff</p>
+                            <label class="share-check"><input type="checkbox" id="sh_team"> Lista de equipo</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">💰 Gastos</p>
+                            <label class="share-check"><input type="checkbox" id="sh_expenses"> Gastos del viaje</label>
+                            <label class="share-check"><input type="checkbox" id="sh_expenses_covered"> Gastos que cubre el viaje</label>
+                        </div>
+
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">📝 Otros</p>
+                            <label class="share-check"><input type="checkbox" id="sh_notes"> Notas internas</label>
+                            <label class="share-check"><input type="checkbox" id="sh_capacity"> Capacidad</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview column -->
+                    <div>
+                        <h4 style="margin-bottom:15px;color:var(--primary);"><i class="fas fa-eye"></i> Vista previa</h4>
+                        <div id="shareTripPreviewBox" style="border:2px solid #e9ecef;border-radius:10px;padding:20px;max-height:520px;overflow-y:auto;font-size:0.9rem;background:white;">
+                        </div>
+                        
+                        <!-- Team list input -->
+                        <div style="margin-top:15px;">
+                            <label style="font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-users-cog"></i> Equipo / Staff para incluir:</label>
+                            <textarea id="shareTeamList" rows="3" placeholder="Ej: Juan Pérez - Guía&#10;María López - Coordinadora&#10;Carlos Ruiz - Chofer" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;" oninput="updateSharePreview()"></textarea>
+                        </div>
+                        
+                        <!-- Expenses covered input -->
+                        <div style="margin-top:10px;">
+                            <label style="font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-money-check"></i> Gastos cubiertos por el viaje (opcional):</label>
+                            <textarea id="shareExpensesCovered" rows="2" placeholder="Ej: Transporte, 2 comidas, seguro viajero..." style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;" oninput="updateSharePreview()"></textarea>
+                        </div>
+                        
+                        <!-- Provider contacts input -->
+                        <div style="margin-top:10px;">
+                            <label style="font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-address-book"></i> Contactos de proveedores:</label>
+                            <textarea id="shareProviderContacts" rows="3" placeholder="Ej: Hotel Marbella: (984)123-4567 / reservas@marbella.com&#10;ADO: 01 800 702 8000" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;" oninput="updateSharePreview()"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:15px;border-top:2px solid #f0f0f0;">
+                    <button class="btn btn-whatsapp" onclick="shareViaWhatsApp()"><i class="fab fa-whatsapp"></i> Enviar por WhatsApp</button>
+                    <button class="btn btn-primary" onclick="shareToPDF()"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
+                    <button class="btn btn-secondary" onclick="copyShareText()"><i class="fas fa-copy"></i> Copiar texto</button>
+                </div>
+            </div>
+        </div>
+
         <div id="tripModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -913,15 +989,6 @@
                         <label for="tripImages">URLs de Imágenes (separadas por comas)</label>
                         <input type="text" id="tripImages" placeholder="https://ejemplo.com/imagen1.jpg, https://ejemplo.com/imagen2.jpg">
                     </div>
-                    
-                    <!-- NUEVO APARTADO DE EQUIPO EN EL MODAL DE VIAJE -->
-                    <div class="form-group">
-                        <label><i class="fas fa-boxes"></i> Equipamiento del Viaje</label>
-                        <div id="tripEquipmentContainer" style="max-height: 200px; overflow-y: auto; border: 1px solid #e9ecef; padding: 10px; border-radius: 8px; background-color: #f8f9fa;">
-                            <p style="color: #6c757d; text-align: center;">Cargando equipo disponible...</p>
-                        </div>
-                    </div>
-
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Guardar Viaje
@@ -1098,72 +1165,6 @@
             </div>
         </div>
 
-        <!-- NUEVO MODAL: Equipo -->
-        <div id="equipmentModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 id="equipmentModalTitle">Nuevo Equipo</h2>
-                    <span class="close" onclick="closeEquipmentModal()">×</span>
-                </div>
-                <form id="equipmentForm">
-                    <input type="hidden" id="equipmentId">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="equipmentName">Nombre del Equipo *</label>
-                            <input type="text" id="equipmentName" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="equipmentQuantity">Cantidad *</label>
-                            <input type="number" id="equipmentQuantity" min="1" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="equipmentStatus">Estado</label>
-                            <select id="equipmentStatus">
-                                <option value="Bueno">Bueno</option>
-                                <option value="Regular">Regular</option>
-                                <option value="Dañado">Dañado</option>
-                                <option value="En reparación">En reparación</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="equipmentBrand">Marca</label>
-                            <input type="text" id="equipmentBrand">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="equipmentCapacity">Capacidad</label>
-                            <input type="text" id="equipmentCapacity" placeholder="Ej: 60L, 4 Personas">
-                        </div>
-                        <div class="form-group">
-                            <label for="equipmentLocation">Ubicación</label>
-                            <input type="text" id="equipmentLocation" placeholder="Ej: Almacén A, Estante 3">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="equipmentCost">Costo (Reposición)</label>
-                            <input type="number" id="equipmentCost" min="0" step="0.01" placeholder="0.00">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="equipmentObservations">Observaciones</label>
-                        <textarea id="equipmentObservations" rows="3" placeholder="Notas sobre el equipo..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Guardar Equipo
-                        </button>
-                        <button type="button" class="btn btn-secondary" onclick="closeEquipmentModal()">
-                            <i class="fas fa-times"></i> Cancelar
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
         <!-- Payment Modal -->
         <div id="paymentModal" class="modal">
             <div class="modal-content">
@@ -1272,7 +1273,7 @@
 
     <div id="notification" class="notification"></div>
 
-    <script src="js/app.js"></script>
     
+    <script src="js/app.js"></script>
 </body>
 </html>

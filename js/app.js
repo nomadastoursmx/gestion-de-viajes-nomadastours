@@ -3944,45 +3944,27 @@ window.saveTrip = function(tripId) {
 };
 
 // =================================================================================
-// == CÓDIGO SEGuro PARA FUNCIONALIDAD DE COMPARTIR VIAJES ==
+// == CÓDIGO PARA FUNCIONALIDAD DE COMPARTIR VIAJES (VERSIÓN FINAL) ==
 // =================================================================================
 
 let currentShareTripId = null;
 
 function openShareTripModal(tripId) {
     currentShareTripId = tripId;
-    // Leemos los viajes directamente desde el almacenamiento local para evitar conflictos
-    const allTrips = JSON.parse(localStorage.getItem('trips') || '[]');
-    const trip = allTrips.find(t => t.id === tripId);
+    const trip = trips.find(t => t.id === tripId);
     if (!trip) {
-        // Usamos una alerta simple en caso de que showNotification no exista
         alert('Error: No se encontró el viaje para compartir.');
         return;
     }
 
     // Resetear checkboxes a valores por defecto
-    document.getElementById('sh_name').checked = true;
-    document.getElementById('sh_destination').checked = true;
-    document.getElementById('sh_dates').checked = true;
-    document.getElementById('sh_description').checked = true;
-    document.getElementById('sh_promo').checked = false;
-    document.getElementById('sh_price').checked = true;
-    document.getElementById('sh_logistics').checked = true;
-    document.getElementById('sh_transport').checked = false;
-    document.getElementById('sh_accommodation').checked = false;
-    document.getElementById('sh_meals').checked = false;
-    document.getElementById('sh_includes').checked = true;
-    document.getElementById('sh_excludes').checked = false;
-    document.getElementById('sh_providers').checked = true;
-    document.getElementById('sh_provider_contacts').checked = false;
-    document.getElementById('sh_clients').checked = true;
-    document.getElementById('sh_payments').checked = false;
-    document.getElementById('sh_food_needs').checked = false;
-    document.getElementById('sh_team').checked = false;
-    document.getElementById('sh_expenses').checked = false;
-    document.getElementById('sh_expenses_covered').checked = false;
-    document.getElementById('sh_notes').checked = false;
-    document.getElementById('sh_capacity').checked = false;
+    const checkboxes = ['sh_name', 'sh_destination', 'sh_dates', 'sh_description', 'sh_promo', 'sh_price', 'sh_logistics', 'sh_transport', 'sh_accommodation', 'sh_meals', 'sh_includes', 'sh_excludes', 'sh_providers', 'sh_provider_contacts', 'sh_clients', 'sh_payments', 'sh_food_needs', 'sh_team', 'sh_expenses', 'sh_expenses_covered', 'sh_notes', 'sh_capacity'];
+    const defaults = { sh_name: true, sh_destination: true, sh_dates: true, sh_description: true, sh_promo: false, sh_price: true, sh_logistics: true, sh_transport: false, sh_accommodation: false, sh_meals: false, sh_includes: true, sh_excludes: false, sh_providers: true, sh_provider_contacts: false, sh_clients: true, sh_payments: false, sh_food_needs: false, sh_team: false, sh_expenses: false, sh_expenses_covered: false, sh_notes: false, sh_capacity: false };
+    
+    checkboxes.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) element.checked = defaults[id];
+    });
 
     // Limpiar campos de texto personalizados
     document.getElementById('shareTeamList').value = '';
@@ -4002,9 +3984,7 @@ function closeShareTripModal() {
 function updateSharePreview() {
     const previewBox = document.getElementById('shareTripPreviewBox');
     let content = '';
-    // Leemos los viajes directamente desde el almacenamiento local
-    const allTrips = JSON.parse(localStorage.getItem('trips') || '[]');
-    const trip = allTrips.find(t => t.id === currentShareTripId);
+    const trip = trips.find(t => t.id === currentShareTripId);
     if (!trip) {
         previewBox.innerText = 'No se pudo cargar la información del viaje.';
         return;
@@ -4012,24 +3992,24 @@ function updateSharePreview() {
 
     const formatDate = (dateString) => new Date(dateString).toLocaleDateString('es-MX');
 
-    if (document.getElementById('sh_name').checked) content += `**Viaje:** ${trip.name}\n`;
-    if (document.getElementById('sh_destination').checked) content += `**Destino:** ${trip.destination}\n`;
-    if (document.getElementById('sh_dates').checked) content += `**Fechas:** ${formatDate(trip.startDate)} al ${formatDate(trip.endDate)}\n`;
-    if (document.getElementById('sh_description').checked && trip.description) content += `**Descripción:** ${trip.description}\n`;
-    if (document.getElementById('sh_promo').checked && trip.promoText) content += `**Promoción:** ${trip.promoText}\n`;
-    if (document.getElementById('sh_price').checked) content += `**Precio por Persona:** $${trip.price.toFixed(2)}\n`;
-    if (document.getElementById('sh_logistics').checked && trip.logistics) content += `**Itinerario/Logística:**\n${trip.logistics}\n`;
-    if (document.getElementById('sh_transport').checked && trip.transport) content += `**Transporte:** ${trip.transport}\n`;
-    if (document.getElementById('sh_accommodation').checked && trip.accommodation) content += `**Hospedaje:** ${trip.accommodation}\n`;
-    if (document.getElementById('sh_meals').checked && trip.meals) content += `**Alimentación:** ${trip.meals}\n`;
-    if (document.getElementById('sh_includes').checked && trip.includes && trip.includes.length > 0) content += `**Incluye:**\n- ${trip.includes.join('\n- ')}\n`;
-    if (document.getElementById('sh_excludes').checked && trip.excludes && trip.excludes.length > 0) content += `**No Incluye:**\n- ${trip.excludes.join('\n- ')}\n`;
-    if (document.getElementById('sh_providers').checked && trip.providers && trip.providers.length > 0) content += `**Proveedores:**\n- ${trip.providers.join('\n- ')}\n`;
-    if (document.getElementById('sh_provider_contacts').checked) {
+    if (document.getElementById('sh_name')?.checked) content += `**Viaje:** ${trip.name}\n`;
+    if (document.getElementById('sh_destination')?.checked) content += `**Destino:** ${trip.destination}\n`;
+    if (document.getElementById('sh_dates')?.checked) content += `**Fechas:** ${formatDate(trip.startDate)} al ${formatDate(trip.endDate)}\n`;
+    if (document.getElementById('sh_description')?.checked && trip.description) content += `**Descripción:** ${trip.description}\n`;
+    if (document.getElementById('sh_promo')?.checked && trip.promoText) content += `**Promoción:** ${trip.promoText}\n`;
+    if (document.getElementById('sh_price')?.checked) content += `**Precio por Persona:** $${trip.price.toFixed(2)}\n`;
+    if (document.getElementById('sh_logistics')?.checked && trip.logistics) content += `**Itinerario/Logística:**\n${trip.logistics}\n`;
+    if (document.getElementById('sh_transport')?.checked && trip.transport) content += `**Transporte:** ${trip.transport}\n`;
+    if (document.getElementById('sh_accommodation')?.checked && trip.accommodation) content += `**Hospedaje:** ${trip.accommodation}\n`;
+    if (document.getElementById('sh_meals')?.checked && trip.meals) content += `**Alimentación:** ${trip.meals}\n`;
+    if (document.getElementById('sh_includes')?.checked && trip.includes && trip.includes.length > 0) content += `**Incluye:**\n- ${trip.includes.join('\n- ')}\n`;
+    if (document.getElementById('sh_excludes')?.checked && trip.excludes && trip.excludes.length > 0) content += `**No Incluye:**\n- ${trip.excludes.join('\n- ')}\n`;
+    if (document.getElementById('sh_providers')?.checked && trip.providers && trip.providers.length > 0) content += `**Proveedores:**\n- ${trip.providers.join('\n- ')}\n`;
+    if (document.getElementById('sh_provider_contacts')?.checked) {
         const contacts = document.getElementById('shareProviderContacts').value;
         if (contacts) content += `**Contactos Proveedores:**\n${contacts}\n`;
     }
-    if (document.getElementById('sh_clients').checked) {
+    if (document.getElementById('sh_clients')?.checked) {
         content += `**Pasajeros (${trip.clients ? trip.clients.length : 0}):**\n`;
         if (trip.clients && trip.clients.length > 0) {
             trip.clients.forEach(c => {
@@ -4038,29 +4018,29 @@ function updateSharePreview() {
             });
         }
     }
-    if (document.getElementById('sh_payments').checked) {
+    if (document.getElementById('sh_payments')?.checked) {
         content += `**Estado de Pagos:** Ver detalles en el sistema.\n`;
     }
-    if (document.getElementById('sh_food_needs').checked) {
+    if (document.getElementById('sh_food_needs')?.checked) {
         const specialFoodClients = trip.clients ? trip.clients.filter(c => c.food) : [];
         if (specialFoodClients.length > 0) {
             content += `**Req. Alimentarios Especiales:**\n`;
             specialFoodClients.forEach(c => content += `- ${c.name}\n`);
         }
     }
-    if (document.getElementById('sh_team').checked) {
+    if (document.getElementById('sh_team')?.checked) {
         const teamList = document.getElementById('shareTeamList').value;
         if (teamList) content += `**Equipo/Staff Asignado:**\n${teamList}\n`;
     }
-    if (document.getElementById('sh_expenses').checked) {
+    if (document.getElementById('sh_expenses')?.checked) {
         content += `**Gastos del Viaje:** Ver detalles en el sistema.\n`;
     }
-    if (document.getElementById('sh_expenses_covered').checked) {
+    if (document.getElementById('sh_expenses_covered')?.checked) {
         const expenses = document.getElementById('shareExpensesCovered').value;
         if (expenses) content += `**Gastos Cubiertos por el Viaje:**\n${expenses}\n`;
     }
-    if (document.getElementById('sh_notes').checked && trip.notes) content += `**Notas Internas:** ${trip.notes}\n`;
-    if (document.getElementById('sh_capacity').checked && trip.capacity) content += `**Capacidad Máx.:** ${trip.capacity} personas\n`;
+    if (document.getElementById('sh_notes')?.checked && trip.notes) content += `**Notas Internas:** ${trip.notes}\n`;
+    if (document.getElementById('sh_capacity')?.checked && trip.capacity) content += `**Capacidad Máx.:** ${trip.capacity} personas\n`;
 
     previewBox.textContent = content || 'Selecciona los elementos que deseas incluir para ver la vista previa.';
 }
@@ -4099,12 +4079,11 @@ function shareViaWhatsApp() {
 function shareToPDF() {
     const { jsPDF } = window.jspdf;
     if (!jsPDF) {
-        alert('Error: La librería para generar PDF no se cargó correctamente. Asegúrate de haber añadido el script en el index.html');
+        alert('Error: La librería para generar PDF no se cargó correctamente.');
         return;
     }
 
-    const allTrips = JSON.parse(localStorage.getItem('trips') || '[]');
-    const trip = allTrips.find(t => t.id === currentShareTripId);
+    const trip = trips.find(t => t.id === currentShareTripId);
     if (!trip) return;
 
     const doc = new jsPDF();
@@ -4124,4 +4103,20 @@ function shareToPDF() {
         y += 7;
     });
 
-    doc.save(`informacion-viaje-${trip.name.rep
+    doc.save(`informacion-viaje-${trip.name.replace(/\s+/g, '_')}.pdf`);
+    alert('PDF descargado correctamente.');
+}
+
+// --- EVENT LISTENER PARA COMPARTIR ---
+document.addEventListener('DOMContentLoaded', function() {
+    const shareModalCheckboxes = document.querySelectorAll('#shareTripModal input[type="checkbox"]');
+    const shareModalTextareas = document.querySelectorAll('#shareTripModal textarea');
+    
+    shareModalCheckboxes.forEach(element => {
+        element.addEventListener('change', updateSharePreview);
+    });
+
+    shareModalTextareas.forEach(element => {
+        element.addEventListener('input', updateSharePreview);
+    });
+});

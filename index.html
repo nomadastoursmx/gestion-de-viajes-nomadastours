@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión - Nómadas Tours</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+        <img src="https://drive.google.com/thumbnail?id=1So1MGQYQVnuFH4OyB1YgdPfhRn-BhI7D" alt="Logo Nómadas Tours" style="height: 150px; margin-right: 15px;">
+            <div>
+                <h1>Sistema de Gestión - Nómadas Tours</h1>
+                <p>Administra viajes, clientes y pagos de forma profesional</p>
+            </div>
+        </div>
+
+
+
+
+        </div>
+
+        <div class="main-nav">
+            <div class="nav-buttons">
+                <button class="btn btn-primary" onclick="showSection('dashboard')">
+                    <i class="fas fa-home"></i> Dashboard
+                </button>
+                <button class="btn btn-primary" onclick="showNewTripModal()">
+                    <i class="fas fa-plus"></i> Nuevo Viaje
+                </button>
+                <button class="btn btn-secondary" onclick="showSection('tripregistry')">
+                    <i class="fas fa-suitcase-rolling"></i> Registro de Viajes
+                </button>
+                <button class="btn btn-secondary" onclick="showSection('clients')">
+                    <i class="fas fa-users"></i> Gestión de Clientes
+                </button>
+                <button class="btn btn-secondary" onclick="showSection('quotations')">
+                    <i class="fas fa-file-invoice"></i> Cotizaciones
+                </button>
+                <button class="btn btn-secondary" onclick="showSection('whatsapp')">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </button>
+                <button class="btn btn-secondary" onclick="showSection('reports')">
+                    <i class="fas fa-chart-bar"></i> Reportes
+                </button>
+                <button class="btn btn-tools" onclick="showSection('tools')">
+                    <i class="fas fa-toolbox"></i> Herramientas
+                </button>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active">
+                <input type="text" id="searchInput" class="search-box" placeholder="🔍 Buscar viajes o clientes..." onkeyup="filterTrips()">
+                
+
+                <div class="view-toggle">
+                    <button id="gridViewBtn" class="active" onclick="setView('grid')">
+                        <i class="fas fa-th"></i> Vista de Tarjetas
+                    </button>
+                    <button id="listViewBtn" onclick="setView('list')">
+                        <i class="fas fa-list"></i> Vista de Lista
+                    </button>
+                    <button id="filterToggleBtn" onclick="toggleFilters()">
+                        <i class="fas fa-filter"></i> Filtros
+                    </button>
+                </div>
+
+                <div class="filter-container" id="filterContainer">
+                    <div class="filter-header">
+                        <h3><i class="fas fa-filter"></i> Filtros Avanzados</h3>
+                        <button class="btn btn-small btn-secondary" onclick="resetFilters()">
+                            <i class="fas fa-redo"></i> Restablecer
+                        </button>
+                    </div>
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="filterDestination">Destino</label>
+                            <select id="filterDestination" onchange="applyFilters()">
+                                <option value="">Todos los destinos</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterStatus">Estado</label>
+                            <select id="filterStatus" onchange="applyFilters()">
+                                <option value="">Todos los estados</option>
+                                <option value="completed">Realizados</option>
+                                <option value="pending">Pendientes</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterDateFrom">Fecha Desde</label>
+                            <input type="date" id="filterDateFrom" onchange="applyFilters()">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterDateTo">Fecha Hasta</label>
+                            <input type="date" id="filterDateTo" onchange="applyFilters()">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterPriceMin">Precio Mínimo</label>
+                            <input type="number" id="filterPriceMin" min="0" step="0.01" onchange="applyFilters()">
+                        </div>
+                        <div class="filter-group">
+                            <label for="filterPriceMax">Precio Máximo</label>
+                            <input type="number" id="filterPriceMax" min="0" step="0.01" onchange="applyFilters()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sort-container">
+                    <div class="sort-group">
+                        <label for="sortBy">Ordenar por:</label>
+                        <select id="sortBy" onchange="applySorting()">
+                            <option value="name">Nombre del viaje</option>
+                            <option value="destination">Destino</option>
+                            <option value="startDate">Fecha de inicio</option>
+                            <option value="endDate">Fecha de fin</option>
+                            <option value="price">Precio</option>
+                            <option value="clients">Número de clientes</option>
+                            <option value="profit">Ganancia</option>
+                        </select>
+                    </div>
+                    <div class="sort-group">
+                        <label for="sortOrder">Orden:</label>
+                        <select id="sortOrder" onchange="applySorting()">
+                            <option value="asc">Ascendente</option>
+                            <option value="desc">Descendente</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="trips-grid" id="tripsContainer">
+                </div>
+
+                <div class="trips-list" id="tripsListContainer">
+                    <table id="tripsTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortTrips('name')">Nombre del Viaje</th>
+                                <th class="sortable" onclick="sortTrips('destination')">Destino</th>
+                                <th class="sortable" onclick="sortTrips('startDate')">Fechas</th>
+                                <th class="sortable" onclick="sortTrips('price')">Precio</th>
+                                <th class="sortable" onclick="sortTrips('status')">Estado</th>
+                                <th class="sortable" onclick="sortTrips('clients')">Clientes</th>
+                                <th class="sortable" onclick="sortTrips('profit')">Ganancia</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tripsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Clients Management Section -->
+            <div id="clients" class="section">
+                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')" style="padding:8px 18px;">
+                        <i class="fas fa-arrow-left"></i> Regresar
+                    </button>
+                    <h2 style="margin:0;"><i class="fas fa-users"></i> Gestión de Clientes</h2>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <button class="btn btn-primary" onclick="showNewGlobalClientModal()">
+                        <i class="fas fa-user-plus"></i> Nuevo Cliente
+                    </button>
+                </div>
+
+                <input type="text" id="clientsSearchInput" class="search-box" placeholder="🔍 Buscar clientes..." onkeyup="filterClients()">
+
+                <div style="overflow-x: auto;">
+                    <table class="clients-table" id="clientsTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortGlobalClients('name')">Foto</th>
+                                <th class="sortable" onclick="sortGlobalClients('name')">Nombre</th>
+                                <th class="sortable" onclick="sortGlobalClients('phone')">Teléfono</th>
+                                <th class="sortable" onclick="sortGlobalClients('email')">Email</th>
+                                <th class="sortable" onclick="sortGlobalClients('address')">Dirección</th>
+                                <th class="sortable" onclick="sortGlobalClients('food')">Alimentos</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- WhatsApp Section -->
+            <div id="whatsapp" class="section">
+                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')" style="padding:8px 18px;">
+                        <i class="fas fa-arrow-left"></i> Regresar
+                    </button>
+                    <h2 style="margin:0;"><i class="fab fa-whatsapp"></i> Envío de Mensajes por WhatsApp</h2>
+                </div>
+                
+                <div class="form-group">
+                    <label for="whatsappMessage">Mensaje:</label>
+                    <textarea id="whatsappMessage" rows="4" placeholder="Escribe tu mensaje aquí..." maxlength="500"></textarea>
+                    <small style="color: var(--gray);"><span id="charCount">0</span>/500 caracteres</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Imagen (opcional):</label>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <img id="whatsappImagePreview" class="photo-preview" style="display: none;">
+                        <div>
+                            <input type="file" id="whatsappImage" accept="image/*" onchange="previewWhatsAppImage(event)">
+                            <button type="button" class="btn btn-small btn-danger" onclick="removeWhatsAppImage()" style="display: none;" id="removeImageBtn">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="whatsapp-recipients">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3>Seleccionar Destinatarios</h3>
+                        <div>
+                            <label class="checkbox-group">
+                                <input type="checkbox" id="selectAllClients" onchange="toggleAllClients()">
+                                <span>Seleccionar todos</span>
+                            </label>
+                            <span class="selected-count" id="selectedCount">0 seleccionados</span>
+                        </div>
+                    </div>
+                    <div id="whatsappRecipientsList">
+                    </div>
+                </div>
+
+                <div class="message-preview">
+                    <h4>Vista Previa del Mensaje</h4>
+                    <div class="message-content" id="messagePreview">Escribe un mensaje para ver la vista previa...</div>
+                </div>
+
+                <div style="text-align: center; margin-top: 25px;">
+                    <button class="btn btn-whatsapp" onclick="sendWhatsAppMessages()" id="sendWhatsAppBtn" disabled>
+                        <i class="fab fa-whatsapp"></i> Enviar Mensajes
+                    </button>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reports" class="section">
+                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')" style="padding:8px 18px;">
+                        <i class="fas fa-arrow-left"></i> Regresar
+                    </button>
+                    <h2 style="margin:0;"><i class="fas fa-chart-bar"></i> Reportes y Estadísticas</h2>
+                </div>
+                
+                <div style="margin-bottom: 25px; background: #f8f9fa; padding: 20px; border-radius: 10px;">
+                    <h3>Filtrar por Fechas</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reportStartDate">Fecha de Inicio</label>
+                            <input type="date" id="reportStartDate" onchange="updateReport()">
+                        </div>
+                        <div class="form-group">
+                            <label for="reportEndDate">Fecha de Fin</label>
+                            <input type="date" id="reportEndDate" onchange="updateReport()">
+                        </div>
+                        <div class="form-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-secondary" onclick="resetDateFilter()">Restablecer</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 30px;">
+                    <h3>Gráfica de Ingresos Mensuales</h3>
+                    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: var(--shadow);">
+                        <canvas id="monthlyChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <div id="reportsContent">
+                </div>
+            </div>
+
+            <!-- Tools Section -->
+            <div id="tools" class="section">
+                <div style="display:flex;align-items:center;gap:15px;margin-bottom:20px;flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')" style="padding:8px 18px;">
+                        <i class="fas fa-arrow-left"></i> Regresar
+                    </button>
+                    <h2 style="margin:0;"><i class="fas fa-toolbox"></i> Herramientas del Sistema</h2>
+                </div>
+                
+                <div class="tools-grid">
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-exchange-alt"></i>
+                        </div>
+                        <h3 class="tool-title">Importar/Exportar Datos</h3>
+                        <p class="tool-description">Gestiona la importación y exportación de datos del sistema en diferentes formatos.</p>
+                        <div class="tool-actions">
+                            <div class="file-input-wrapper">
+                                <label for="importJson" class="file-input-label">
+                                    <i class="fas fa-file-import"></i> Importar JSON
+                                </label>
+                                <input type="file" id="importJson" accept=".json" onchange="importData(event)">
+                            </div>
+                            <button class="btn btn-secondary" onclick="exportData('csv')" style="width: 100%; margin-top: 12px;">
+                                <i class="fas fa-file-csv"></i> Exportar CSV
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportData('json')" style="width: 100%; margin-top: 12px;">
+                                <i class="fas fa-file-code"></i> Exportar JSON
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <h3 class="tool-title">Gestión de Datos</h3>
+                        <p class="tool-description">Guarda y administra los datos del sistema de forma segura.</p>
+                        <div class="tool-actions">
+                            <button class="btn btn-primary" onclick="saveData()" style="width: 100%;">
+                                <i class="fas fa-save"></i> Guardar Datos
+                            </button>
+                            <button class="btn btn-warning" onclick="clearData()" style="width: 100%; margin-top: 12px;">
+                                <i class="fas fa-trash-alt"></i> Limpiar Datos
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-download"></i>
+                        </div>
+                        <h3 class="tool-title">Exportar Sistema</h3>
+                        <p class="tool-description">Descarga una copia completa del código del sistema para uso offline.</p>
+                        <div class="tool-actions">
+                            <button class="btn btn-secondary" onclick="exportProjectCode()" style="width: 100%;">
+                                <i class="fas fa-download"></i> Exportar Código
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="tool-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h3 class="tool-title">Respaldo y Recuperación</h3>
+                        <p class="tool-description">Crea y restaura copias de seguridad de tus datos.</p>
+                        <div class="tool-actions">
+                            <button class="btn btn-primary" onclick="createBackup()" style="width: 100%;">
+                                <i class="fas fa-shield-alt"></i> Crear Respaldo
+                            </button>
+                            <div class="file-input-wrapper" style="margin-top: 12px;">
+                                <label for="restoreBackup" class="file-input-label">
+                                    <i class="fas fa-undo"></i> Restaurar Respaldo
+                                </label>
+                                <input type="file" id="restoreBackup" accept=".json" onchange="restoreBackup(event)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trip Registry Section -->
+        <div id="tripregistry" class="section">
+            <!-- Header band -->
+            <div style="background:linear-gradient(135deg,#047698 0%,#03637d 60%,#0d7e9e 100%);border-radius:16px;padding:28px 30px;margin-bottom:28px;color:white;position:relative;overflow:hidden;">
+                <div style="position:absolute;right:-30px;top:-30px;width:140px;height:140px;background:rgba(255,255,255,.06);border-radius:50%;"></div>
+                <div style="position:absolute;right:40px;bottom:-50px;width:200px;height:200px;background:rgba(255,255,255,.04);border-radius:50%;"></div>
+                <div style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;position:relative;">
+                    <button class="btn btn-secondary" onclick="showSection('dashboard')" style="padding:8px 18px;background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:white;">
+                        <i class="fas fa-arrow-left"></i> Regresar
+                    </button>
+                    <div>
+                        <h2 style="margin:0;font-size:1.5rem;font-weight:700;"><i class="fas fa-book-open"></i> Catálogo de Viajes</h2>
+                        <p style="margin:4px 0 0;opacity:.8;font-size:0.9rem;">Fichas logísticas — archivo interno de referencia</p>
+                    </div>
+                    <div style="margin-left:auto;">
+                        <button class="btn btn-primary" onclick="showNewCatalogTripModal()" style="background:white;color:var(--primary);border:none;font-weight:700;padding:11px 22px;">
+                            <i class="fas fa-plus-circle"></i> Nueva Ficha
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search & filter bar -->
+            <div style="background:white;border-radius:12px;padding:16px 20px;box-shadow:var(--shadow);margin-bottom:22px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+                <div style="position:relative;flex:1;min-width:220px;">
+                    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray);"></i>
+                    <input type="text" id="regSearch" placeholder="Buscar viaje, destino, categoría..." oninput="filterTripRegistry()"
+                        style="width:100%;padding:10px 10px 10px 38px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.9rem;">
+                </div>
+                <select id="regStatusFilter" onchange="filterTripRegistry()"
+                    style="padding:11px 14px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;min-width:140px;">
+                    <option value="">📋 Todos</option>
+                    <option value="activo">✅ Activos</option>
+                    <option value="inactivo">⏸ Inactivos</option>
+                </select>
+                <div id="regCount" style="color:var(--gray);font-size:0.85rem;white-space:nowrap;"></div>
+            </div>
+
+            <div id="tripRegistryContent"></div>
+        </div>
+
+        <!-- Quotations Section -->
+        <div id="quotations" class="section">
+            <!-- Header -->
+            <div style="display:flex;align-items:center;gap:15px;margin-bottom:28px;flex-wrap:wrap;">
+                <button class="btn btn-secondary" onclick="showSection('dashboard')" style="padding:8px 18px;">
+                    <i class="fas fa-arrow-left"></i> Regresar
+                </button>
+                <div>
+                    <h2 style="margin:0;font-size:1.5rem;"><i class="fas fa-file-invoice" style="color:var(--primary);"></i> Generador de Cotizaciones</h2>
+                    <p style="margin:4px 0 0;color:var(--gray);font-size:0.9rem;">Crea cotizaciones profesionales listas para enviar</p>
+                </div>
+            </div>
+
+            <!-- Company config collapsible -->
+            <details style="background:white;border-radius:12px;box-shadow:var(--shadow);margin-bottom:22px;overflow:hidden;" open>
+                <summary style="padding:16px 20px;cursor:pointer;font-weight:600;color:var(--dark);display:flex;align-items:center;gap:10px;list-style:none;background:linear-gradient(135deg,#f8f9fa,#f0f8fc);border-bottom:1px solid #e9ecef;">
+                    <i class="fas fa-building" style="color:var(--primary);"></i> Datos de la Empresa
+                    <span style="margin-left:auto;font-size:0.8rem;color:var(--gray);font-weight:400;">▼ expandir</span>
+                </summary>
+                <div style="padding:20px;">
+                    <div class="form-row">
+                        <div class="form-group" style="display:none;"><input type="text" id="gdriveLogo"></div>
+                        <div class="form-group">
+                            <label for="companyName"><i class="fas fa-tag"></i> Nombre de la Empresa</label>
+                            <input type="text" id="companyName" value="Nómadas Tours" oninput="updateQuotePreview()">
+                        </div>
+                        <div class="form-group">
+                            <label for="companyPhone"><i class="fas fa-phone"></i> Teléfono</label>
+                            <input type="text" id="companyPhone" placeholder="(55) 1234-5678" oninput="updateQuotePreview()">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="companyEmail"><i class="fas fa-envelope"></i> Email</label>
+                            <input type="email" id="companyEmail" placeholder="contacto@empresa.com" oninput="updateQuotePreview()">
+                        </div>
+                        <div class="form-group">
+                            <label for="companyWebsite"><i class="fas fa-globe"></i> Sitio Web / Redes</label>
+                            <input type="text" id="companyWebsite" placeholder="www.empresa.com" oninput="updateQuotePreview()">
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Main 2-col layout -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;" class="quote-grid">
+
+                <!-- LEFT: Form -->
+                <div style="display:flex;flex-direction:column;gap:16px;">
+
+                    <!-- Cliente -->
+                    <div style="background:white;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#047698,#03637d);padding:12px 20px;display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-user" style="color:rgba(255,255,255,.8);"></i>
+                            <span style="color:white;font-weight:600;font-size:0.95rem;">Datos del Cliente</span>
+                        </div>
+                        <div style="padding:18px;">
+                            <div class="form-row">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="quoteClientName">Nombre del Cliente *</label>
+                                    <input type="text" id="quoteClientName" placeholder="Nombre completo" oninput="updateQuotePreview()">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="quoteClientPhone">Teléfono</label>
+                                    <input type="text" id="quoteClientPhone" placeholder="(55) 0000-0000" oninput="updateQuotePreview()">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top:12px;margin-bottom:0;">
+                                <label for="quoteDate">Fecha de Cotización</label>
+                                <input type="date" id="quoteDate" oninput="updateQuotePreview()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Viaje -->
+                    <div style="background:white;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#1976d2,#1565c0);padding:12px 20px;display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-suitcase-rolling" style="color:rgba(255,255,255,.8);"></i>
+                            <span style="color:white;font-weight:600;font-size:0.95rem;">Datos del Viaje</span>
+                        </div>
+                        <div style="padding:18px;">
+                            <div class="form-group">
+                                <label for="quoteSelectTrip"><i class="fas fa-book-open"></i> Cargar desde Catálogo</label>
+                                <select id="quoteSelectTrip" onchange="loadTripIntoQuote()" style="background:#f8f9fa;">
+                                    <option value="">— Cotización manual —</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="quoteTripName">Nombre del Viaje / Destino *</label>
+                                <input type="text" id="quoteTripName" placeholder="Ej: Cancún Todo Incluido" oninput="updateQuotePreview()">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="quoteDates">Fechas del Viaje</label>
+                                    <input type="text" id="quoteDates" placeholder="15–20 Mar 2026" oninput="updateQuotePreview()">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="quotePersons">Personas</label>
+                                    <input type="number" id="quotePersons" min="1" value="1" oninput="updateQuotePreview()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Precio -->
+                    <div style="background:white;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#2e7d32,#388e3c);padding:12px 20px;display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-dollar-sign" style="color:rgba(255,255,255,.8);"></i>
+                            <span style="color:white;font-weight:600;font-size:0.95rem;">Precios</span>
+                        </div>
+                        <div style="padding:18px;">
+                            <div class="form-row">
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="quotePricePerPerson">Precio por Persona *</label>
+                                    <input type="number" id="quotePricePerPerson" min="0" step="0.01" placeholder="0.00" oninput="updateQuotePreview()">
+                                </div>
+                                <div class="form-group" style="margin-bottom:0;">
+                                    <label for="quoteDiscount">Descuento (%)</label>
+                                    <input type="number" id="quoteDiscount" min="0" max="100" value="0" step="0.01" oninput="updateQuotePreview()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Incluye / No incluye -->
+                    <div style="background:white;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#455a64,#546e7a);padding:12px 20px;display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-list-check" style="color:rgba(255,255,255,.8);"></i>
+                            <span style="color:white;font-weight:600;font-size:0.95rem;">Servicios</span>
+                        </div>
+                        <div style="padding:18px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                                <div>
+                                    <label style="font-weight:600;color:#2e7d32;display:block;margin-bottom:8px;"><i class="fas fa-check-circle"></i> Incluye</label>
+                                    <div id="includesContainer">
+                                        <div style="display:flex;gap:6px;margin-bottom:6px;">
+                                            <input type="text" class="include-item" placeholder="Transporte..." oninput="updateQuotePreview()" style="flex:1;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;">
+                                            <button type="button" class="btn btn-small btn-danger" onclick="removeIncludeItem(this)"><i class="fas fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-small btn-secondary" onclick="addIncludeItem()"><i class="fas fa-plus"></i> Agregar</button>
+                                </div>
+                                <div>
+                                    <label style="font-weight:600;color:#c62828;display:block;margin-bottom:8px;"><i class="fas fa-times-circle"></i> No Incluye</label>
+                                    <div id="excludesContainer">
+                                        <div style="display:flex;gap:6px;margin-bottom:6px;">
+                                            <input type="text" class="exclude-item" placeholder="Gastos pers..." oninput="updateQuotePreview()" style="flex:1;padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;">
+                                            <button type="button" class="btn btn-small btn-danger" onclick="removeExcludeItem(this)"><i class="fas fa-times"></i></button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-small btn-secondary" onclick="addExcludeItem()"><i class="fas fa-plus"></i> Agregar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Promo + Notas + Imgs -->
+                    <div style="background:white;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;">
+                        <div style="background:linear-gradient(135deg,#6a1b9a,#7b1fa2);padding:12px 20px;display:flex;align-items:center;gap:10px;">
+                            <i class="fas fa-pen-fancy" style="color:rgba(255,255,255,.8);"></i>
+                            <span style="color:white;font-weight:600;font-size:0.95rem;">Descripción y Notas</span>
+                        </div>
+                        <div style="padding:18px;">
+                            <div class="form-group">
+                                <label for="quotePromoText">Texto Promocional</label>
+                                <textarea id="quotePromoText" rows="3" placeholder="Descripción atractiva del paquete..." oninput="updateQuotePreview()"></textarea>
+                            </div>
+                            <div class="form-group" style="margin-bottom:12px;">
+                                <label for="quoteNotes">Condiciones / Notas</label>
+                                <textarea id="quoteNotes" rows="2" placeholder="Políticas de cancelación, vigencia..." oninput="updateQuotePreview()"></textarea>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label><i class="fas fa-images"></i> Imágenes (opcional)</label>
+                                <input type="file" id="quoteImages" accept="image/*" multiple onchange="handleQuoteImages(event)">
+                                <div id="quoteImagePreviews" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action buttons -->
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button class="btn btn-whatsapp" onclick="sendQuoteWhatsApp()" style="flex:1;justify-content:center;">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button class="btn btn-primary" onclick="downloadQuotePDF()" style="flex:1;justify-content:center;">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                        <button class="btn btn-secondary" onclick="printQuote()" style="flex:1;justify-content:center;">
+                            <i class="fas fa-print"></i> Imprimir
+                        </button>
+                    </div>
+                    <button class="btn btn-secondary" onclick="clearQuoteForm()" style="width:100%;margin-top:-6px;">
+                        <i class="fas fa-broom"></i> Limpiar formulario
+                    </button>
+                </div>
+
+                <!-- RIGHT: Preview -->
+                <div>
+                    <div style="position:sticky;top:20px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                            <h3 style="margin:0;font-size:1rem;color:var(--dark);"><i class="fas fa-eye" style="color:var(--primary);"></i> Vista Previa</h3>
+                            <span style="font-size:0.78rem;color:var(--gray);background:#f0f0f0;padding:4px 10px;border-radius:20px;">Se actualiza en tiempo real</span>
+                        </div>
+                        <div id="quotePreviewContainer" style="border:2px solid #e9ecef;border-radius:12px;overflow:hidden;background:white;box-shadow:0 8px 32px rgba(0,0,0,.1);max-height:80vh;overflow-y:auto;">
+                            <div id="quotePrintArea" style="font-family:'Poppins',sans-serif;">
+                                <div style="padding:40px;text-align:center;color:var(--gray);">
+                                    <i class="fas fa-file-invoice" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px;"></i>
+                                    Completa el formulario para ver la vista previa
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Catalog Trip Modal -->
+        <div id="catalogTripModal" class="modal">
+            <div class="modal-content large" style="max-width:750px;">
+                <div class="modal-header">
+                    <h2 id="catalogTripModalTitle">Nueva Ficha de Viaje</h2>
+                    <span class="close" onclick="closeCatalogTripModal()">×</span>
+                </div>
+                <form id="catalogTripForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="catName">Nombre del Viaje *</label>
+                            <input type="text" id="catName" required placeholder="Ej: Cancún Todo Incluido">
+                        </div>
+                        <div class="form-group">
+                            <label for="catDestination">Destino *</label>
+                            <input type="text" id="catDestination" required placeholder="Ej: Cancún, Q.R.">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="catCategory">Categoría 
+                                <button type="button" onclick="openManageCategoriesModal()" style="background:none;border:none;color:var(--primary);cursor:pointer;font-size:0.8rem;font-weight:600;padding:2px 6px;text-decoration:underline;">
+                                    <i class="fas fa-cog"></i> Gestionar
+                                </button>
+                            </label>
+                            <select id="catCategory">
+                                <option value="">Sin categoría</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="catStatus">Estado</label>
+                            <select id="catStatus">
+                                <option value="activo">Activo</option>
+                                <option value="inactivo">Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="catDuration">Duración</label>
+                            <input type="text" id="catDuration" placeholder="Ej: 5 días / 4 noches">
+                        </div>
+                        <div class="form-group">
+                            <label for="catCapacity">Capacidad máx. personas</label>
+                            <input type="number" id="catCapacity" min="1" placeholder="Ej: 40">
+                        </div>
+                        <div class="form-group">
+                            <label for="catPrice">Precio base por persona (MXN)</label>
+                            <input type="number" id="catPrice" min="0" step="0.01" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <!-- CALCULADORA DE COSTOS -->
+                    <div style="background:linear-gradient(135deg,#f0f8fc,#e8f4f8);border-radius:14px;padding:22px;margin-bottom:20px;border:2px solid #b8dce8;">
+                        <h4 style="margin-bottom:16px;color:var(--primary);display:flex;align-items:center;gap:8px;"><i class="fas fa-calculator"></i> Calculadora de Precio Sugerido</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="catPersonsEstimate">👥 Personas estimadas</label>
+                                <input type="number" id="catPersonsEstimate" min="1" value="20" oninput="calcSuggestedPrice()">
+                            </div>
+                            <div class="form-group">
+                                <label for="catMargin">📈 Margen de ganancia (%)</label>
+                                <input type="number" id="catMargin" min="0" max="200" value="20" oninput="calcSuggestedPrice()">
+                            </div>
+                        </div>
+
+                        <!-- Costos -->
+                        <div style="margin-bottom:16px;">
+                            <label style="font-weight:600;margin-bottom:8px;display:block;color:#333;"><i class="fas fa-receipt" style="color:var(--primary);"></i> Desglose de costos del viaje</label>
+                            <div style="display:grid;grid-template-columns:2fr 1fr 1.2fr auto;gap:8px;margin-bottom:6px;padding:0 4px;font-size:0.72rem;color:var(--gray);font-weight:700;letter-spacing:.04em;text-transform:uppercase;"><span>Concepto</span><span>Monto $</span><span>Tipo</span><span></span></div>
+                            <div id="catCostsContainer"></div>
+                            <button type="button" class="btn btn-small btn-secondary" style="margin-top:6px;" onclick="addCatCostRow()"><i class="fas fa-plus"></i> Agregar costo</button>
+                        </div>
+
+                        <!-- Impuestos personalizables -->
+                        <div style="margin-bottom:16px;background:white;border-radius:10px;padding:14px;border:1px solid #d0e8f0;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                <label style="font-weight:600;color:#333;margin:0;"><i class="fas fa-percentage" style="color:#f57c00;"></i> Impuestos / Cargos adicionales</label>
+                                <button type="button" class="btn btn-small btn-secondary" onclick="addTaxRow()"><i class="fas fa-plus"></i> Agregar</button>
+                            </div>
+                            <div id="catTaxesContainer">
+                                <!-- Default IVA row -->
+                                <div class="tax-row" style="display:grid;grid-template-columns:auto 2fr 1fr auto;gap:8px;align-items:center;margin-bottom:6px;">
+                                    <input type="checkbox" id="taxIva" checked onchange="calcSuggestedPrice()" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+                                    <input type="text" value="IVA" readonly style="padding:8px;border:2px solid #e9ecef;border-radius:8px;background:#f8f9fa;font-family:'Poppins',sans-serif;font-size:0.85rem;color:#555;">
+                                    <div style="display:flex;align-items:center;gap:4px;">
+                                        <input type="number" value="16" min="0" max="100" step="0.1" onchange="calcSuggestedPrice()" style="padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;width:70px;">
+                                        <span style="font-size:0.85rem;color:#666;">%</span>
+                                    </div>
+                                    <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.tax-row').remove();calcSuggestedPrice()"><i class="fas fa-times"></i></button>
+                                </div>
+                            </div>
+                            <p style="font-size:0.78rem;color:var(--gray);margin:4px 0 0;">Los impuestos activos se suman al precio con margen</p>
+                        </div>
+
+                        <!-- Resumen -->
+                        <div id="catPriceSummary" style="background:white;border-radius:10px;padding:16px;border:2px solid #b8dce8;display:none;">
+                            <table style="width:100%;font-size:0.88rem;border-collapse:collapse;">
+                                <tr style="border-bottom:1px solid #f0f0f0;">
+                                    <td style="padding:5px 0;color:#666;">Costo total del grupo</td>
+                                    <td style="text-align:right;font-weight:600;" id="catTotalCosts"></td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #f0f0f0;">
+                                    <td style="padding:5px 0;color:#666;">Costo por persona</td>
+                                    <td style="text-align:right;" id="catCostPerPerson"></td>
+                                </tr>
+                                <tr style="border-bottom:1px solid #f0f0f0;">
+                                    <td style="padding:5px 0;color:#666;">+ Margen (<span id="catMarginLabel">20</span>%)</td>
+                                    <td style="text-align:right;font-weight:600;color:#047698;" id="catWithMargin"></td>
+                                </tr>
+                                <tr id="catTaxBreakdownRow" style="border-bottom:1px solid #f0f0f0;display:none;">
+                                    <td colspan="2" id="catTaxBreakdown" style="padding:5px 0;font-size:0.82rem;color:#888;"></td>
+                                </tr>
+                                <tr style="border-bottom:2px solid #e0e0e0;">
+                                    <td style="padding:5px 0;color:#888;font-size:0.85rem;">Total impuestos activos</td>
+                                    <td style="text-align:right;font-weight:600;color:#f57c00;" id="catIvaAmount"></td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0 5px;font-size:1rem;font-weight:700;color:#2e7d32;">
+                                        <i class="fas fa-tag"></i> Precio sugerido / persona
+                                    </td>
+                                    <td style="text-align:right;font-size:1.2rem;font-weight:700;color:#2e7d32;" id="catSuggestedPrice"></td>
+                                </tr>
+                            </table>
+                            <button type="button" class="btn btn-primary" style="margin-top:12px;width:100%;" onclick="applySuggestedPrice()">
+                                <i class="fas fa-arrow-down"></i> Usar este precio como precio base
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="catDescription">Descripción del viaje</label>
+                        <textarea id="catDescription" rows="3" placeholder="Descripción general del paquete..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="catLogistics">Logística / Itinerario detallado</label>
+                        <textarea id="catLogistics" rows="5" placeholder="Día 1: Salida desde... a las...&#10;Día 2: Visita a...&#10;..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="catTransport">Transporte</label>
+                            <input type="text" id="catTransport" placeholder="Ej: Autobús Ejecutivo ADO">
+                        </div>
+                        <div class="form-group">
+                            <label for="catAccommodation">Hospedaje</label>
+                            <input type="text" id="catAccommodation" placeholder="Ej: Hotel Gran Caribe 4 estrellas">
+                        </div>
+                        <div class="form-group">
+                            <label for="catMeals">Alimentación</label>
+                            <input type="text" id="catMeals" placeholder="Ej: Desayuno incluido">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-handshake"></i> Proveedores</label>
+                        <div id="catalogProvidersContainer"></div>
+                        <button type="button" class="btn btn-small btn-secondary" onclick="addCatalogTagItem('catalogProvidersContainer','','Proveedor')"><i class="fas fa-plus"></i> Agregar</button>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-check-circle" style="color:var(--success);"></i> ¿Qué incluye?</label>
+                        <div id="catalogIncludesContainer"></div>
+                        <button type="button" class="btn btn-small btn-secondary" onclick="addCatalogTagItem('catalogIncludesContainer','','Incluye...')"><i class="fas fa-plus"></i> Agregar</button>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-times-circle" style="color:var(--danger);"></i> ¿Qué NO incluye?</label>
+                        <div id="catalogExcludesContainer"></div>
+                        <button type="button" class="btn btn-small btn-secondary" onclick="addCatalogTagItem('catalogExcludesContainer','','No incluye...')"><i class="fas fa-plus"></i> Agregar</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="catPromoText">Texto Promocional</label>
+                        <textarea id="catPromoText" rows="3" placeholder="Descripción atractiva para publicidad y cotizaciones..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="catNotes">Notas Internas</label>
+                        <textarea id="catNotes" rows="3" placeholder="Notas para el equipo, condiciones especiales, etc."></textarea>
+                    </div>
+                    <div class="form-group" style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar Ficha</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeCatalogTripModal()"><i class="fas fa-times"></i> Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Trip Modal -->
+        <!-- Manage Categories Modal -->
+        <div id="manageCategoriesModal" class="modal">
+            <div class="modal-content" style="max-width:450px;">
+                <div class="modal-header">
+                    <h2><i class="fas fa-tags"></i> Gestionar Categorías</h2>
+                    <span class="close" onclick="document.getElementById('manageCategoriesModal').style.display='none'">×</span>
+                </div>
+                <div>
+                    <div style="display:flex;gap:8px;margin-bottom:15px;">
+                        <input type="text" id="newCategoryInput" placeholder="Nueva categoría..." style="flex:1;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;"
+                            onkeypress="if(event.key==='Enter'){event.preventDefault();addNewCategory();}">
+                        <button type="button" class="btn btn-primary" onclick="addNewCategory()"><i class="fas fa-plus"></i> Agregar</button>
+                    </div>
+                    <div id="categoriesListContainer" style="max-height:350px;overflow-y:auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Share Trip Modal -->
+        <div id="shareTripModal" class="modal">
+            <div class="modal-content large" style="max-width:800px;">
+                <div class="modal-header">
+                    <h2><i class="fas fa-share-alt"></i> Compartir Información del Viaje</h2>
+                    <span class="close" onclick="closeShareTripModal()">×</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:25px;" id="shareTripLayout">
+                    <!-- Checkboxes column -->
+                    <div>
+                        <h4 style="margin-bottom:15px;color:var(--primary);"><i class="fas fa-filter"></i> ¿Qué deseas incluir?</h4>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">📋 Información del viaje</p>
+                            <label class="share-check"><input type="checkbox" id="sh_name" checked> Nombre y destino</label>
+                            <label class="share-check"><input type="checkbox" id="sh_duration" checked> Duración</label>
+                            <label class="share-check"><input type="checkbox" id="sh_description" checked> Descripción</label>
+                            <label class="share-check"><input type="checkbox" id="sh_promo"> Texto promocional</label>
+                            <label class="share-check"><input type="checkbox" id="sh_price" checked> Precio por persona</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">🗺️ Logística</p>
+                            <label class="share-check"><input type="checkbox" id="sh_logistics" checked> Itinerario/Logística</label>
+                            <label class="share-check"><input type="checkbox" id="sh_transport"> Transporte</label>
+                            <label class="share-check"><input type="checkbox" id="sh_accommodation"> Hospedaje</label>
+                            <label class="share-check"><input type="checkbox" id="sh_meals"> Alimentación</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">✅ Servicios</p>
+                            <label class="share-check"><input type="checkbox" id="sh_includes" checked> Qué incluye</label>
+                            <label class="share-check"><input type="checkbox" id="sh_excludes"> Qué NO incluye</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">🤝 Proveedores</p>
+                            <label class="share-check"><input type="checkbox" id="sh_providers" checked> Lista de proveedores</label>
+                            <label class="share-check"><input type="checkbox" id="sh_provider_contacts"> Contactos proveedores</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">👥 Pasajeros (viaje activo)</p>
+                            <label class="share-check"><input type="checkbox" id="sh_clients"> Lista de pasajeros</label>
+                            <label class="share-check"><input type="checkbox" id="sh_payments"> Estado de pagos</label>
+                            <label class="share-check"><input type="checkbox" id="sh_food_needs"> Req. alimentarios especiales</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">🧑‍💼 Equipo / Staff</p>
+                            <label class="share-check"><input type="checkbox" id="sh_team"> Lista de equipo</label>
+                        </div>
+                        
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;margin-bottom:12px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">💰 Gastos</p>
+                            <label class="share-check"><input type="checkbox" id="sh_expenses"> Gastos del viaje</label>
+                            <label class="share-check"><input type="checkbox" id="sh_expenses_covered"> Gastos que cubre el viaje</label>
+                        </div>
+
+                        <div style="background:#f8f9fa;border-radius:10px;padding:15px;">
+                            <p style="font-weight:600;margin-bottom:10px;color:var(--dark);">📝 Otros</p>
+                            <label class="share-check"><input type="checkbox" id="sh_notes"> Notas internas</label>
+                            <label class="share-check"><input type="checkbox" id="sh_capacity"> Capacidad</label>
+                        </div>
+                    </div>
+                    
+                    <!-- Preview column -->
+                    <div>
+                        <h4 style="margin-bottom:15px;color:var(--primary);"><i class="fas fa-eye"></i> Vista previa</h4>
+                        <div id="shareTripPreviewBox" style="border:2px solid #e9ecef;border-radius:10px;padding:20px;max-height:520px;overflow-y:auto;font-size:0.9rem;background:white;">
+                        </div>
+                        
+                        <!-- Team list input -->
+                        <div style="margin-top:15px;">
+                            <label style="font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-users-cog"></i> Equipo / Staff para incluir:</label>
+                            <textarea id="shareTeamList" rows="3" placeholder="Ej: Juan Pérez - Guía&#10;María López - Coordinadora&#10;Carlos Ruiz - Chofer" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;" oninput="updateSharePreview()"></textarea>
+                        </div>
+                        
+                        <!-- Expenses covered input -->
+                        <div style="margin-top:10px;">
+                            <label style="font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-money-check"></i> Gastos cubiertos por el viaje (opcional):</label>
+                            <textarea id="shareExpensesCovered" rows="2" placeholder="Ej: Transporte, 2 comidas, seguro viajero..." style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;" oninput="updateSharePreview()"></textarea>
+                        </div>
+                        
+                        <!-- Provider contacts input -->
+                        <div style="margin-top:10px;">
+                            <label style="font-weight:600;display:block;margin-bottom:6px;"><i class="fas fa-address-book"></i> Contactos de proveedores:</label>
+                            <textarea id="shareProviderContacts" rows="3" placeholder="Ej: Hotel Marbella: (984)123-4567 / reservas@marbella.com&#10;ADO: 01 800 702 8000" style="width:100%;padding:10px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;" oninput="updateSharePreview()"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:15px;border-top:2px solid #f0f0f0;">
+                    <button class="btn btn-whatsapp" onclick="shareViaWhatsApp()"><i class="fab fa-whatsapp"></i> Enviar por WhatsApp</button>
+                    <button class="btn btn-primary" onclick="shareToPDF()"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
+                    <button class="btn btn-secondary" onclick="copyShareText()"><i class="fas fa-copy"></i> Copiar texto</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tripModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="tripModalTitle">Nuevo Viaje</h2>
+                    <span class="close" onclick="closeTripModal()">×</span>
+                </div>
+                <form id="tripForm">
+                    <div class="form-group" style="background:#e3f2fd;padding:15px;border-radius:10px;margin-bottom:15px;">
+                        <label for="tripFromCatalog"><i class="fas fa-book-open" style="color:#1976d2;"></i> Cargar desde Catálogo de Viajes <span style="font-size:0.85rem;color:var(--gray);">(opcional)</span></label>
+                        <select id="tripFromCatalog" onchange="loadCatalogIntoTripForm()" style="margin-top:6px;">
+                            <option value="">-- Viaje nuevo / manual --</option>
+                        </select>
+                    </div>
+                    <div id="tripCatalogInfo" style="display:none;background:#f8f9fa;padding:12px;border-radius:8px;margin-bottom:15px;border-left:4px solid #047698;font-size:0.9rem;"></div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tripName">Nombre del Viaje *</label>
+                            <input type="text" id="tripName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tripDestination">Destino *</label>
+                            <input type="text" id="tripDestination" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tripStartDate">Fecha de Inicio *</label>
+                            <input type="date" id="tripStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tripEndDate">Fecha de Fin *</label>
+                            <input type="date" id="tripEndDate" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tripBasePrice">Precio Base *</label>
+                            <input type="number" id="tripBasePrice" min="0" step="0.01" required onchange="calculateTaxPrice()">
+                        </div>
+                        <div class="form-group">
+                            <label for="tripPrice">Precio Final *</label>
+                            <input type="number" id="tripPrice" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="includeTax" onchange="calculateTaxPrice()">
+                        <label for="includeTax">Incluir impuestos del 16%</label>
+                    </div>
+                    <div class="tax-info" id="taxInfo" style="display: none;">
+                        <i class="fas fa-info-circle"></i>
+                        <span id="taxCalculation"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="tripDescription">Descripción</label>
+                        <textarea id="tripDescription" rows="4" placeholder="Descripción detallada del viaje..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="tripImages">URLs de Imágenes (separadas por comas)</label>
+                        <input type="text" id="tripImages" placeholder="https://ejemplo.com/imagen1.jpg, https://ejemplo.com/imagen2.jpg">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Viaje
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeTripModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Clients Modal -->
+        <div id="clientsModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2 id="clientsModalTitle">Gestionar Clientes</h2>
+                    <span class="close" onclick="closeClientsModal()">×</span>
+                </div>
+                <div id="clientsContent">
+                </div>
+            </div>
+        </div>
+
+        <!-- Global Client Form Modal -->
+        <div id="globalClientModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="globalClientModalTitle">Nuevo Cliente</h2>
+                    <span class="close" onclick="closeGlobalClientModal()">×</span>
+                </div>
+                <form id="globalClientForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="globalClientName">Nombre Completo *</label>
+                            <input type="text" id="globalClientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="globalClientPhone">Teléfono *</label>
+                            <input type="tel" id="globalClientPhone" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="globalClientEmail">Email</label>
+                            <input type="email" id="globalClientEmail">
+                        </div>
+                        <div class="form-group">
+                            <label for="globalClientAddress">Dirección</label>
+                            <input type="text" id="globalClientAddress">
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="globalClientFood" name="globalClientFood">
+                        <label for="globalClientFood">Requiere alimentos especiales</label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="globalClientPhoto">Foto</label>
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <img id="globalClientPhotoPreview" class="photo-preview" style="display: none;">
+                            <div>
+                                <input type="file" id="globalClientPhoto" accept="image/*" onchange="previewGlobalClientPhoto(event)">
+                                <button type="button" class="btn btn-small btn-danger" onclick="removeGlobalClientPhoto()" style="display: none;" id="removeGlobalPhotoBtn">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="globalClientNotes">Notas Adicionales</label>
+                        <textarea id="globalClientNotes" rows="3" placeholder="Observaciones, referencias, etc."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Cliente
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeGlobalClientModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Add Existing Client Modal -->
+        <div id="addExistingClientModal" class="modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h2>Agregar Cliente Existente</h2>
+                    <span class="close" onclick="closeAddExistingClientModal()">×</span>
+                </div>
+                <div>
+                    <input type="text" id="existingClientSearch" class="search-box" placeholder="🔍 Buscar cliente..." onkeyup="filterExistingClients()">
+                    <div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+                        <table class="clients-table" id="existingClientsTable">
+                            <thead>
+                                <tr>
+                                    <th>Foto</th>
+                                    <th>Nombre</th>
+                                    <th>Teléfono</th>
+                                    <th>Email</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="existingClientsTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Form Modal -->
+        <div id="clientFormModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="clientFormModalTitle">Nuevo Cliente</h2>
+                    <span class="close" onclick="closeClientFormModal()">×</span>
+                </div>
+                <form id="clientForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clientName">Nombre Completo *</label>
+                            <input type="text" id="clientName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientEmail">Email</label>
+                            <input type="email" id="clientEmail">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clientPhone">Teléfono *</label>
+                            <input type="tel" id="clientPhone" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientDocument">Documento de Identidad</label>
+                            <input type="text" id="clientDocument">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clientDiscount">Descuento (%)</label>
+                            <input type="number" id="clientDiscount" min="0" max="100" step="0.01" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="clientFinalPrice">Precio Final</label>
+                            <input type="number" id="clientFinalPrice" readonly style="background-color: #f5f5f5;">
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="clientFood" name="clientFood">
+                        <label for="clientFood">Requiere alimentos especiales</label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="clientNotes">Notas Adicionales</label>
+                        <textarea id="clientNotes" rows="3" placeholder="Observaciones, referencias, etc."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Guardar Cliente
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeClientFormModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Payment Modal -->
+        <div id="paymentModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Registrar Abono</h2>
+                    <span class="close" onclick="closePaymentModal()">×</span>
+                </div>
+                <form id="paymentForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="paymentAmount">Monto del Abono *</label>
+                            <input type="number" id="paymentAmount" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="paymentDate">Fecha del Pago *</label>
+                            <input type="date" id="paymentDate" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentMethod">Método de Pago *</label>
+                        <select id="paymentMethod" required>
+                            <option value="">Seleccionar método</option>
+                            <option value="efectivo">Efectivo</option>
+                            <option value="transferencia">Transferencia Bancaria</option>
+                            <option value="tarjeta_credito">Tarjeta de Crédito</option>
+                            <option value="tarjeta_debito">Tarjeta de Débito</option>
+                            <option value="deposito">Depósito Bancario</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentReference">Referencia/Número de Transacción</label>
+                        <input type="text" id="paymentReference" placeholder="Número de referencia, autorización, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label for="paymentNotes">Notas del Pago</label>
+                        <textarea id="paymentNotes" rows="3" placeholder="Observaciones adicionales sobre el pago..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Registrar Abono
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Expense Modal -->
+        <div id="expenseModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Registrar Gasto</h2>
+                    <span class="close" onclick="closeExpenseModal()">×</span>
+                </div>
+                <form id="expenseForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseDescription">Descripción del Gasto *</label>
+                            <input type="text" id="expenseDescription" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expenseAmount">Monto *</label>
+                            <input type="number" id="expenseAmount" min="0.01" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="expenseDate">Fecha del Gasto *</label>
+                            <input type="date" id="expenseDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expenseCategory">Categoría *</label>
+                            <select id="expenseCategory" required>
+                                <option value="">Seleccionar categoría</option>
+                                <option value="transporte">Transporte</option>
+                                <option value="hospedaje">Hospedaje</option>
+                                <option value="alimentacion">Alimentación</option>
+                                <option value="entradas">Entradas/Boletos</option>
+                                <option value="guias">Guías Turísticos</option>
+                                <option value="combustible">Combustible</option>
+                                <option value="peajes">Peajes</option>
+                                <option value="varios">Varios</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="expenseNotes">Notas Adicionales</label>
+                        <textarea id="expenseNotes" rows="3" placeholder="Observaciones adicionales sobre el gasto..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Registrar Gasto
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="closeExpenseModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    
+    <script src="js/app.js"></script>
+</body>
+</html>

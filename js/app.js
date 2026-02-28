@@ -1,4 +1,4 @@
-// Global variables
+ // Global variables
         let trips = JSON.parse(localStorage.getItem('travelAgencyTrips')) || [];
         let globalClients = JSON.parse(localStorage.getItem('travelAgencyGlobalClients')) || [];
         let currentTripId = null;
@@ -2922,136 +2922,142 @@
         // =============================================
         // CALCULADORA PRECIO SUGERIDO (en catálogo)
         // =============================================
-       /**
- * Función principal para calcular el precio sugerido.
- * Corrige el cálculo del margen y los impuestos.
- */
-function calcSuggestedPrice() {
-    // 1. Obtener valores base
-    const persons = parseFloat(document.getElementById('catPersonsEstimate').value) || 1;
-    const marginPercent = parseFloat(document.getElementById('catMargin').value) || 0;
-    
-    // 2. Calcular el costo total sumando las filas de costos
-    let totalCosts = 0;
-    const costRows = document.querySelectorAll('#catCostsContainer .cost-row');
-    costRows.forEach(row => {
-        const amountInput = row.querySelector('input[type="number"]');
-        if (amountInput) {
-            totalCosts += parseFloat(amountInput.value) || 0;
+        function addCatCostRow(desc='', amt=0, tipo='total') {
+            const container = document.getElementById('catCostsContainer');
+            const div = document.createElement('div');
+            div.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1.2fr auto;gap:8px;margin-bottom:8px;align-items:center;';
+            div.innerHTML = `
+                <input type="text" placeholder="Ej: Autobús rentado, Hotel, Seguro..." value="${desc}"
+                    style="padding:9px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.9rem;"
+                    oninput="calcSuggestedPrice()">
+                <input type="number" placeholder="Monto $" value="${amt||''}" min="0" step="0.01"
+                    style="padding:9px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.9rem;"
+                    oninput="calcSuggestedPrice()">
+                <select onchange="calcSuggestedPrice()"
+                    style="padding:9px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;">
+                    <option value="total" ${tipo==='total'?'selected':''}>💼 Costo total del grupo</option>
+                    <option value="persona" ${tipo==='persona'?'selected':''}>👤 Ya es por persona</option>
+                    <option value="servicio" ${tipo==='servicio'?'selected':''}>🔧 Por servicio/unidad</option>
+                </select>
+                <button type="button" class="btn btn-small btn-danger"
+                    onclick="this.parentElement.remove();calcSuggestedPrice()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(div);
         }
-    });
 
-    // Si no hay costos, ocultar el resumen y terminar
-    if (totalCosts === 0) {
-        document.getElementById('catPriceSummary').style.display = 'none';
-        return;
-    }
-    
-    const costPerPerson = totalCosts / persons;
+        function addTaxRow(name='', pct=0) {
+            const container = document.getElementById('catTaxesContainer');
+            const div = document.createElement('div');
+            div.className = 'tax-row';
+            div.style.cssText = 'display:grid;grid-template-columns:auto 2fr 1fr auto;gap:8px;align-items:center;margin-bottom:6px;';
+            div.innerHTML = `
+                <input type="checkbox" checked onchange="calcSuggestedPrice()" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
+                <input type="text" value="${name}" placeholder="Nombre del impuesto" style="padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;" oninput="calcSuggestedPrice()">
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <input type="number" value="${pct||''}" placeholder="%" min="0" max="100" step="0.1" onchange="calcSuggestedPrice()" style="padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;width:70px;">
+                    <span style="font-size:0.85rem;color:#666;">%</span>
+                </div>
+                <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.tax-row').remove();calcSuggestedPrice()"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(div);
+        }
 
-    // 3. Calcular el monto del margen y el precio con margen (LA CORRECCIÓN CLAVE)
-    const marginAmount = totalCosts * (marginPercent / 100);
-    const priceWithMargin = totalCosts + marginAmount;
+        function calcSuggestedPrice() {
+            const container = document.getElementById('catCostsContainer');
+            const rows = container.querySelectorAll('div');
+            const persons = parseInt(document.getElementById('catPersonsEstimate').value) || 1;
+            let totalCostPerPerson = 0;
+            let breakdown = [];
 
-    // 4. Calcular el total de impuestos (sobre el precio con margen)
-    let totalTaxes = 0;
-    let taxBreakdownText = '';
-    const taxRows = document.querySelectorAll('#catTaxesContainer .tax-row');
-    taxRows.forEach(row => {
-        const checkbox = row.querySelector('input[type="checkbox"]');
-        if (checkbox && checkbox.checked) {
-            const percentInput = row.querySelector('input[type="number"]');
-            const taxName = row.querySelector('input[type="text"]').value;
-            if (percentInput) {
-                const taxPercent = parseFloat(percentInput.value) || 0;
-                const taxAmount = priceWithMargin * (taxPercent / 100);
-                totalTaxes += taxAmount;
-                taxBreakdownText += `${taxName} (${taxPercent}%): $${taxAmount.toFixed(2)}; `;
+            rows.forEach(row => {
+                const inputs = row.querySelectorAll('input');
+                const select = row.querySelector('select');
+                if (inputs.length < 2 || !select) return;
+                const desc = inputs[0].value || 'Costo';
+                const amt = parseFloat(inputs[1].value) || 0;
+                const tipo = select.value;
+                if (amt <= 0) return;
+
+                let cpp = 0, label = '';
+                if (tipo === 'total') {
+                    cpp = amt / persons;
+                    label = formatCurrency(amt) + ' ÷ ' + persons + ' pax = ' + formatCurrency(cpp) + '/persona';
+                } else if (tipo === 'persona') {
+                    cpp = amt;
+                    label = formatCurrency(amt) + '/persona';
+                } else if (tipo === 'servicio') {
+                    cpp = amt / persons;
+                    label = formatCurrency(amt) + '/servicio ÷ ' + persons + ' pax = ' + formatCurrency(cpp) + '/persona';
+                }
+                totalCostPerPerson += cpp;
+                breakdown.push({ desc, cpp, label });
+            });
+
+            const margin = parseFloat(document.getElementById('catMargin').value) || 0;
+            const withMargin = margin < 100 ? totalCostPerPerson / (1 - margin / 100) : totalCostPerPerson;
+            const totalGroupCost = totalCostPerPerson * persons;
+
+            // Collect active taxes
+            const taxRows = document.querySelectorAll('#catTaxesContainer .tax-row');
+            let totalTaxAmount = 0;
+            let taxBreakdownParts = [];
+            taxRows.forEach(row => {
+                const cb = row.querySelector('input[type="checkbox"]');
+                const inputs = row.querySelectorAll('input[type="text"], input[type="number"]');
+                if (!cb || !cb.checked) return;
+                const taxName = (inputs[0] && inputs[0].type === 'text') ? inputs[0].value || 'Impuesto' : 'IVA';
+                // For the IVA default row, read value from number input after label
+                const numInputs = row.querySelectorAll('input[type="number"]');
+                const pct = parseFloat(numInputs[numInputs.length-1]?.value) || 0;
+                if (pct <= 0) return;
+                const taxAmt = withMargin * (pct / 100);
+                totalTaxAmount += taxAmt;
+                taxBreakdownParts.push(taxName + ' ' + pct + '%: ' + formatCurrency(taxAmt));
+            });
+
+            const suggested = withMargin + totalTaxAmount;
+
+            if (totalCostPerPerson <= 0) {
+                document.getElementById('catPriceSummary').style.display = 'none';
+                return;
             }
+
+            let bkHTML = '';
+            if (breakdown.length > 1) {
+                bkHTML = breakdown.map(b =>
+                    '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px dashed #eee;font-size:0.8rem;">' +
+                    '<span>' + b.desc + '</span><span style="color:#047698;">' + b.label + '</span></div>'
+                ).join('');
+            }
+
+            document.getElementById('catPriceSummary').style.display = 'block';
+            document.getElementById('catTotalCosts').textContent = formatCurrency(totalGroupCost) + ' (grupo)';
+            document.getElementById('catCostPerPerson').innerHTML = (bkHTML ? '<div style="margin-bottom:4px;">' + bkHTML + '</div>' : '') + '<strong>' + formatCurrency(totalCostPerPerson) + '</strong>';
+            document.getElementById('catMarginLabel').textContent = margin;
+            document.getElementById('catWithMargin').textContent = formatCurrency(withMargin);
+
+            const taxBreakRow = document.getElementById('catTaxBreakdownRow');
+            const taxBreakEl = document.getElementById('catTaxBreakdown');
+            if (taxBreakdownParts.length > 0) {
+                taxBreakEl.innerHTML = taxBreakdownParts.map(p => '+ ' + p).join('<br>');
+                taxBreakRow.style.display = '';
+            } else {
+                taxBreakRow.style.display = 'none';
+            }
+            document.getElementById('catIvaAmount').textContent = totalTaxAmount > 0 ? formatCurrency(totalTaxAmount) : '—';
+            document.getElementById('catSuggestedPrice').textContent = formatCurrency(suggested);
         }
-    });
 
-    // 5. Calcular el precio final
-    const finalPrice = priceWithMargin + totalTaxes;
-    const finalPricePerPerson = finalPrice / persons;
-
-    // 6. Actualizar la interfaz con los resultados
-    document.getElementById('catPriceSummary').style.display = 'block';
-    document.getElementById('catTotalCosts').innerText = `$${totalCosts.toFixed(2)}`;
-    document.getElementById('catCostPerPerson').innerText = `$${costPerPerson.toFixed(2)}`;
-    document.getElementById('catMarginLabel').innerText = marginPercent;
-    document.getElementById('catWithMargin').innerText = `$${priceWithMargin.toFixed(2)}`;
-    document.getElementById('catIvaAmount').innerText = `$${totalTaxes.toFixed(2)}`;
-    document.getElementById('catSuggestedPrice').innerText = `$${finalPricePerPerson.toFixed(2)}`;
-
-    // Mostrar/ocultar y actualizar el desglose de impuestos
-    const taxBreakdownRow = document.getElementById('catTaxBreakdownRow');
-    if (taxBreakdownText && totalTaxes > 0) {
-        taxBreakdownRow.style.display = 'table-row';
-        document.getElementById('catTaxBreakdown').innerText = taxBreakdownText;
-    } else {
-        taxBreakdownRow.style.display = 'none';
-    }
-}
-
-/**
- * Función para agregar una nueva fila de costos.
- */
-function addCatCostRow() {
-    const container = document.getElementById('catCostsContainer');
-    const rowCount = container.children.length;
-    const newRow = document.createElement('div');
-    newRow.className = 'cost-row';
-    newRow.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1.2fr auto;gap:8px;margin-bottom:6px;';
-    newRow.innerHTML = `
-        <input type="text" placeholder="Ej: Transporte" style="padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;">
-        <input type="number" placeholder="0.00" min="0" step="0.01" oninput="calcSuggestedPrice()" style="padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;">
-        <select style="padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;">
-            <option>Fijo</option>
-            <option>Por persona</option>
-        </select>
-        <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.cost-row').remove(); calcSuggestedPrice();"><i class="fas fa-times"></i></button>
-    `;
-    container.appendChild(newRow);
-}
-
-/**
- * Función para agregar una nueva fila de impuestos.
- */
-function addTaxRow() {
-    const container = document.getElementById('catTaxesContainer');
-    const taxCount = container.querySelectorAll('.tax-row').length;
-    const newRow = document.createElement('div');
-    newRow.className = 'tax-row';
-    newRow.style.cssText = 'display:grid;grid-template-columns:auto 2fr 1fr auto;gap:8px;align-items:center;margin-bottom:6px;';
-    newRow.innerHTML = `
-        <input type="checkbox" checked onchange="calcSuggestedPrice()" style="width:18px;height:18px;accent-color:var(--primary);cursor:pointer;">
-        <input type="text" placeholder="Nombre impuesto" value="Impuesto ${taxCount + 1}" style="padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;">
-        <div style="display:flex;align-items:center;gap:4px;">
-            <input type="number" value="0" min="0" max="100" step="0.1" onchange="calcSuggestedPrice()" style="padding:8px;border:2px solid #e9ecef;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.85rem;width:70px;">
-            <span style="font-size:0.85rem;color:#666;">%</span>
-        </div>
-        <button type="button" class="btn btn-small btn-danger" onclick="this.closest('.tax-row').remove(); calcSuggestedPrice();"><i class="fas fa-times"></i></button>
-    `;
-    container.appendChild(newRow);
-}
-
-// --- Inicialización (Opcional pero recomendado) ---
-// Agrega algunas filas de ejemplo al cargar la página para que el usuario pueda probarla de inmediato.
-document.addEventListener('DOMContentLoaded', () => {
-    // Agregar un costo de ejemplo de 400
-    const costContainer = document.getElementById('catCostsContainer');
-    if (costContainer.children.length === 0) {
-        addCatCostRow();
-        const firstCostRow = costContainer.querySelector('.cost-row');
-        if(firstCostRow) {
-            firstCostRow.querySelector('input[type="text"]').value = 'Costo de Actividad';
-            firstCostRow.querySelector('input[type="number"]').value = '400';
+        function applySuggestedPrice() {
+            const suggestedEl = document.getElementById('catSuggestedPrice');
+            if (!suggestedEl || !suggestedEl.textContent) return;
+            // Parse value from formatted currency
+            const raw = suggestedEl.textContent.replace(/[^0-9.]/g, '');
+            document.getElementById('catPrice').value = parseFloat(raw).toFixed(2);
+            showNotification('Precio sugerido aplicado', 'success');
         }
-    }
-    // Llamar a la función por primera vez para que se muestre el cálculo inicial
-    calcSuggestedPrice();
-});
 
         // =============================================
         // CARGAR CATÁLOGO EN FORMULARIO NUEVO VIAJE
